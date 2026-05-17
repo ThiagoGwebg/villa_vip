@@ -1,9 +1,5 @@
 const supabase = require('../config/supabase');
-
-const adminEmails = (process.env.ADMIN_EMAILS || "")
-  .split(",")
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
+const { isAdminEmail } = require('../services/adminService');
 
 const register = async (req, res) => {
   const { nome, email, senha } = req.body;
@@ -51,7 +47,7 @@ const login = async (req, res) => {
     }
 
     const { session, user } = data;
-    const isAdmin = adminEmails.includes(user.email.toLowerCase());
+    const isAdmin = await isAdminEmail(user.email);
 
     // Retorna o formato exato que o frontend já espera
     res.json({ 
@@ -69,4 +65,57 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { register, login };
+/**
+ * PUT /api/auth/profile — edita o nome e (opcionalmente) a senha.
+ *
+ * Usa a Admin API (chave service_role) com o `id` que veio da sessão
+ * validada no authMiddleware — nunca de um id enviado pelo cliente. Não
+ * exige relogar: devolvemos o `user` atualizado para o front regravar o
+ * localStorage.
+ */
+const updateProfile = async (req, res) => {
+  const { nome, senha } = req.body;
+
+  const novoNome = typeof nome === 'string' ? nome.trim() : '';
+  if (!novoNome) {
+    return res.status(400).json({ message: 'O nome não pode ficar vazio.' });
+  }
+  if (senha != null && String(senha).length > 0 && String(senha).length < 6) {
+    return res
+      .status(400)
+      .json({ message: 'A nova senha precisa ter ao menos 6 caracteres.' });
+  }
+
+  try {
+    const attrs = { user_metadata: { ...req.user.user_metadata, nome: novoNome } };
+    if (senha) attrs.password = String(senha);
+
+    const { data, error } = await supabase.auth.admin.updateUserById(
+      req.user.id,
+      attrs
+    );
+
+    if (error) {
+      console.error('Supabase admin.updateUserById error:', error);
+      return res.status(400).json({ message: error.message });
+    }
+
+    const user = data.user;
+    const isAdmin = await isAdminEmail(user.email);
+
+    res.json({
+      message: 'Perfil atualizado com sucesso!',
+      user: {
+        id: user.id,
+        nome: user.user_metadata?.nome || user.email.split('@')[0],
+        email: user.email,
+        isAdmin,
+      },
+    });
+  } catch (error) {
+    console.error('Server Error:', error);
+    res.status(500).json({ message: 'Erro no servidor' });
+  }
+};
+
+module.exports = { register, login, updateProfile };

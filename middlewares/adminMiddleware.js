@@ -2,32 +2,25 @@
  * Autorização de administrador para o painel de BI.
  *
  * Roda DEPOIS do authMiddleware (que valida a sessão Supabase e popula
- * req.user). Compara req.user.email com a allowlist ADMIN_EMAILS do .env
- * (e-mails separados por vírgula).
+ * req.user). Consulta a coluna `admin` da tabela `users` no banco, casando
+ * pelo e-mail de req.user — não usa mais a allowlist ADMIN_EMAILS do .env.
  *
- * Deny-by-default: sem allowlist configurada, ninguém entra.
+ * Deny-by-default: e-mail ausente, usuário não encontrado ou admin=false → 403.
  */
-const adminEmails = (process.env.ADMIN_EMAILS || "")
-  .split(",")
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
+const { isAdminEmail } = require('../services/adminService');
 
-if (adminEmails.length === 0) {
-  console.warn(
-    "[admin] ADMIN_EMAILS não configurado — o painel /admin está bloqueado " +
-      "para todos. Defina no .env, ex.: ADMIN_EMAILS=dono@villavip.com,gerente@villavip.com"
-  );
-}
+const adminMiddleware = async (req, res, next) => {
+  try {
+    if (await isAdminEmail(req.user?.email)) return next();
 
-const adminMiddleware = (req, res, next) => {
-  const email = (req.user?.email || "").trim().toLowerCase();
-
-  if (email && adminEmails.includes(email)) return next();
-
-  return res.status(403).json({
-    code: "NOT_ADMIN",
-    message: "Acesso restrito a administradores.",
-  });
+    return res.status(403).json({
+      code: 'NOT_ADMIN',
+      message: 'Acesso restrito a administradores.',
+    });
+  } catch (err) {
+    console.error('Admin middleware error:', err);
+    return res.status(500).json({ message: 'Erro ao validar permissão de admin' });
+  }
 };
 
 module.exports = adminMiddleware;

@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="/styles.css?v=3" />
+<link rel="stylesheet" href="/styles.css?v=4" />
 <link rel="icon" type="image/svg+xml" href="/assets/logo-mark.svg" />
 </head>
 <body>
@@ -206,8 +206,62 @@
   </aside>
 </div>
 
+<!-- ===================== MEUS PEDIDOS ===================== -->
+<div class="sheet-overlay" id="ordersOverlay" hidden>
+  <aside class="cart-drawer" id="ordersDrawer" role="dialog" aria-modal="true" aria-label="Meus pedidos">
+    <div class="cart-head">
+      <h2>Meus Pedidos</h2>
+      <button class="sheet-close" id="ordersClose" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="orders-body" id="ordersBody">
+      <p class="cart-empty">Carregando…</p>
+    </div>
+    <p class="orders-note">Pedidos finalizados pelo WhatsApp ficam aqui por 30 dias.</p>
+  </aside>
+</div>
+
+<!-- ===================== EDITAR PERFIL ===================== -->
+<div class="sheet-overlay" id="profileOverlay" hidden>
+  <div class="sheet profile-sheet" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+    <button class="sheet-close" id="profileClose" aria-label="Fechar">&times;</button>
+    <div class="sheet-body">
+      <span class="sheet-brand">Minha conta</span>
+      <h2 class="sheet-name" id="profileTitle">Editar Perfil</h2>
+
+      <div id="profileMsg" class="auth-msg" hidden></div>
+
+      <form id="profileForm" class="profile-form" autocomplete="off">
+        <div class="input-group">
+          <label for="pfNome">Nome</label>
+          <input type="text" id="pfNome" class="auth-input" required maxlength="80" />
+        </div>
+
+        <div class="input-group">
+          <label for="pfEmail">E-mail</label>
+          <input type="email" id="pfEmail" class="auth-input" disabled />
+          <small class="field-hint">O e-mail não pode ser alterado por aqui.</small>
+        </div>
+
+        <div class="profile-divider"><span>Alterar senha (opcional)</span></div>
+
+        <div class="input-group">
+          <label for="pfSenha">Nova senha</label>
+          <input type="password" id="pfSenha" class="auth-input" placeholder="Deixe em branco para manter" minlength="6" autocomplete="new-password" />
+        </div>
+
+        <div class="input-group">
+          <label for="pfSenha2">Confirmar nova senha</label>
+          <input type="password" id="pfSenha2" class="auth-input" placeholder="Repita a nova senha" minlength="6" autocomplete="new-password" />
+        </div>
+
+        <button type="submit" class="btn-wa lg" id="pfSubmit">Salvar alterações</button>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast" hidden></div>
 
-<script src="/app.js?v=3"></script>
+<script src="/app.js?v=4"></script>
 </body>
 </html>

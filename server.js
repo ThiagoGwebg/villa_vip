@@ -16,6 +16,7 @@ const express = require("express");
 const path = require("path");
 const fs = require("fs");
 const authRoutes = require("./routes/auth");
+const orderRoutes = require("./routes/orders");
 const authMiddleware = require("./middlewares/authMiddleware");
 const adminMiddleware = require("./middlewares/adminMiddleware");
 
@@ -47,6 +48,7 @@ function normalize(str) {
 
 app.use(express.json());
 app.use('/api/auth', authRoutes);
+app.use('/api/orders', orderRoutes);
 
 // Compressão leve via headers + cache de assets estáticos (catálogo "leve e rápido")
 app.use(
