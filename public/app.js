@@ -167,7 +167,7 @@ function renderSocialProof() {
   const cli = sp.clientes || {};
   const nota = g.nota ? Number(g.nota).toFixed(1).replace(".", ",") : null;
   const reviews = Array.isArray(g.avaliacoes) ? g.avaliacoes : [];
-  const posts = Array.isArray(ig.posts) ? ig.posts : [];
+  const embeds = Array.isArray(ig.embeds) ? ig.embeds : [];
 
   // Faixa de números (prova social rápida)
   const statsHTML = `
@@ -189,7 +189,24 @@ function renderSocialProof() {
         : ""}
     </div>`;
 
-  // Avaliações reais do Google
+  // Avaliações reais do Google — carrossel contínuo (marquee)
+  const revCard = (r, dup) => `
+    <article class="rev-card"${dup ? ' aria-hidden="true"' : ""}>
+      <div class="rev-top">
+        <span class="rev-avatar">${escapeHTML((r.autor || "?").charAt(0).toUpperCase())}</span>
+        <div class="rev-id">
+          <b>${escapeHTML(r.autor || "Cliente")}</b>
+          <small>${escapeHTML(r.quando || "")}</small>
+        </div>
+        <span class="rev-g" aria-label="via Google">G</span>
+      </div>
+      <div class="rev-stars">${stars(r.nota || 5)}</div>
+      <p class="rev-text">${escapeHTML(r.texto || "")}</p>
+    </article>`;
+
+  // Velocidade proporcional à quantidade (≈6s por card, mínimo 30s)
+  const revDur = Math.max(30, reviews.length * 6);
+
   const reviewsHTML = reviews.length
     ? `
     <div class="reviews">
@@ -202,24 +219,11 @@ function renderSocialProof() {
           <span class="rev-google-cta">Ver no Google →</span>
         </a>
       </div>
-      <div class="rev-grid">
-        ${reviews
-          .map(
-            (r) => `
-          <article class="rev-card">
-            <div class="rev-top">
-              <span class="rev-avatar">${escapeHTML((r.autor || "?").charAt(0).toUpperCase())}</span>
-              <div class="rev-id">
-                <b>${escapeHTML(r.autor || "Cliente")}</b>
-                <small>${escapeHTML(r.quando || "")}</small>
-              </div>
-              <span class="rev-g" aria-label="via Google">G</span>
-            </div>
-            <div class="rev-stars">${stars(r.nota || 5)}</div>
-            <p class="rev-text">${escapeHTML(r.texto || "")}</p>
-          </article>`
-          )
-          .join("")}
+      <div class="rev-marquee" aria-label="Avaliações de clientes">
+        <div class="rev-track" data-dur="${revDur}">
+          ${reviews.map((r) => revCard(r, false)).join("")}
+          ${reviews.map((r) => revCard(r, true)).join("")}
+        </div>
       </div>
     </div>`
     : "";
@@ -233,27 +237,87 @@ function renderSocialProof() {
         <a class="btn-insta" href="${ig.url || "#"}" target="_blank" rel="noopener">Seguir</a>
       </div>
       ${ig.chamada ? `<p class="insta-sub">${escapeHTML(ig.chamada)}</p>` : ""}
-      <div class="insta-grid">
-        ${posts
-          .map(
-            (p) => `
-          <a class="insta-tile" href="${p.url || ig.url}" target="_blank" rel="noopener"
-             aria-label="${escapeHTML(p.legenda || "Post no Instagram")}">
-            <span class="insta-bg" aria-hidden="true">${BULL}</span>
-            ${p.img
-              ? `<img src="${p.img}" alt="${escapeHTML(p.legenda || "")}" loading="lazy"
-                   onerror="this.style.display='none';this.closest('.insta-tile').classList.add('no-img')" />`
-              : ""}
-            <span class="insta-ov" aria-hidden="true">${IG_ICON}</span>
-          </a>`
-          )
-          .join("")}
-      </div>
+      ${embeds.length
+        ? `<div class="insta-embeds">
+             ${embeds
+               .map(
+                 (url) => `
+             <blockquote class="instagram-media" data-instgrm-permalink="${url}" data-instgrm-version="14">
+               <a href="${url}" target="_blank" rel="noopener">Ver post no Instagram</a>
+             </blockquote>`
+               )
+               .join("")}
+           </div>`
+        : `<p class="insta-sub">Siga <a href="${ig.url}" target="_blank" rel="noopener">@${escapeHTML(ig.handle)}</a> no Instagram.</p>`}
     </div>`
     : "";
 
   box.hidden = false;
   box.innerHTML = `<div class="wrap">${statsHTML}${reviewsHTML}${instaHTML}</div>`;
+
+  startReviewMarquee();
+  loadInstagramEmbeds();
+}
+
+/* ---------- Embed oficial do Instagram ---------- */
+function loadInstagramEmbeds() {
+  if (!document.querySelector(".instagram-media")) return;
+  // Já carregado: só reprocessa os novos blockquotes
+  if (window.instgrm && window.instgrm.Embeds) {
+    window.instgrm.Embeds.process();
+    return;
+  }
+  if (document.getElementById("ig-embed-js")) return; // já está baixando
+  const s = document.createElement("script");
+  s.id = "ig-embed-js";
+  s.async = true;
+  s.src = "https://www.instagram.com/embed.js";
+  document.body.appendChild(s);
+}
+
+/* ---------- Carrossel de avaliações (motor em JS, roda sozinho) ---------- */
+let reviewRAF = 0;
+function startReviewMarquee() {
+  cancelAnimationFrame(reviewRAF);
+  const marquee = document.querySelector(".rev-marquee");
+  const track = marquee && marquee.querySelector(".rev-track");
+  if (!track) return;
+
+  const dur = Math.max(20, Number(track.dataset.dur) || 40); // segundos por volta
+  const firstDup = track.querySelector('[aria-hidden="true"]');
+  let loopW = 0; // largura de 1 conjunto = ponto de reinício sem emenda
+  let x = 0;
+  let last = performance.now();
+  let paused = false;
+
+  function measure() {
+    const prev = track.style.transform;
+    track.style.transform = "none";
+    loopW = firstDup
+      ? firstDup.getBoundingClientRect().left - track.getBoundingClientRect().left
+      : track.scrollWidth / 2;
+    track.style.transform = prev;
+  }
+  measure();
+  window.addEventListener("resize", measure);
+
+  // Pausa ao interagir; retoma sozinho ao sair
+  marquee.addEventListener("mouseenter", () => (paused = true));
+  marquee.addEventListener("mouseleave", () => (paused = false));
+  marquee.addEventListener("focusin", () => (paused = true));
+  marquee.addEventListener("focusout", () => (paused = false));
+
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); // clamp p/ abas em 2º plano
+    last = now;
+    if (!paused && loopW > 0 && !document.hidden) {
+      x += (loopW / dur) * dt;
+      if (x >= loopW) x -= loopW;
+      track.style.transform = `translate3d(${-x}px,0,0)`;
+    }
+    reviewRAF = requestAnimationFrame(frame);
+  }
+  reviewRAF = requestAnimationFrame(frame);
 }
 
 /* ---------- Autenticação UI ---------- */

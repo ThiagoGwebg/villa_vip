@@ -1565,18 +1565,31 @@ select {
   color: var(--line);
 }
 
-/* Grade de avaliações */
+/* Carrossel contínuo de avaliações */
 .reviews {
   margin-bottom: 52px;
 }
 
-.rev-grid {
-  display: grid;
-  grid-template-columns: 1fr;
+.rev-marquee {
+  position: relative;
+  overflow: hidden;
+  margin: 0 -18px;
+  padding: 4px 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+}
+
+.rev-track {
+  display: flex;
   gap: 14px;
+  width: max-content;
+  padding: 0 18px;
+  will-change: transform;
 }
 
 .rev-card {
+  flex: 0 0 290px;
+  width: 290px;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -1657,6 +1670,10 @@ select {
   font-size: 14px;
   line-height: 1.6;
   color: var(--ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* Instagram */
@@ -1686,83 +1703,39 @@ select {
   transform: translateY(-1px);
 }
 
-.insta-grid {
+.insta-embeds {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  justify-items: center;
 }
 
-.insta-tile {
-  position: relative;
-  aspect-ratio: 1/1;
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: linear-gradient(150deg, #3e2a17, #6b4423);
-  display: block;
+.insta-embeds .instagram-media {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 540px !important;
+  margin: 0 !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow) !important;
 }
 
-.insta-tile img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.insta-tile .insta-bg {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: rgba(255, 255, 255, .12);
-}
-
-.insta-tile .insta-bg svg {
-  width: 55%;
-  fill: currentColor;
-}
-
-.insta-tile .insta-ov {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: rgba(20, 12, 5, .35);
-  opacity: 0;
-  transition: opacity .18s;
-}
-
-.insta-tile .insta-ov svg {
-  width: 30px;
-  height: 30px;
-  fill: none;
-  stroke: #fff;
-  stroke-width: 2;
-}
-
-.insta-tile:hover .insta-ov,
-.insta-tile:focus-visible .insta-ov {
-  opacity: 1;
-}
-
-.insta-tile.no-img .insta-ov {
-  opacity: 1;
-  background: rgba(20, 12, 5, .2);
-}
-
-@media (min-width:560px) {
-  .rev-grid {
-    grid-template-columns: repeat(2, 1fr);
+@media (min-width:620px) {
+  .insta-embeds {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
   }
+}
 
-  .insta-grid {
-    grid-template-columns: repeat(6, 1fr);
+@media (min-width:1000px) {
+  .insta-embeds {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (min-width:900px) {
-  .rev-grid {
-    grid-template-columns: repeat(3, 1fr);
+  .rev-card {
+    flex-basis: 320px;
+    width: 320px;
   }
 
   .stats-band {

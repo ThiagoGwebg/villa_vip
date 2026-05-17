@@ -111,14 +111,12 @@
       "handle": "lojavillavip",
       "url": "https://instagram.com/lojavillavip",
       "chamada": "Novidades, looks country e bastidores da loja — siga a gente!",
-      "_comentario": "Coloque as imagens em public/assets/insta/ e aponte 'img'. Cada post linka para 'url'. Sem imagem, exibe um quadro com a marca.",
-      "posts": [
-        { "img": "/assets/insta/post1.jpg", "url": "https://www.instagram.com/p/DNVxZzJuwy5/", "legenda": "Linha masculina" },
-        { "img": "/assets/insta/post2.jpg", "url": "https://www.instagram.com/p/C8FPnGPOGmU/", "legenda": "Novidades na loja" },
-        { "img": "/assets/insta/post3.jpg", "url": "https://instagram.com/lojavillavip", "legenda": "Botas texanas" },
-        { "img": "/assets/insta/post4.jpg", "url": "https://instagram.com/lojavillavip", "legenda": "Chapéus" },
-        { "img": "/assets/insta/post5.jpg", "url": "https://instagram.com/lojavillavip", "legenda": "Estilo country" },
-        { "img": "/assets/insta/post6.jpg", "url": "https://instagram.com/lojavillavip", "legenda": "Acessórios" }
+      "_comentario": "Embed oficial do Instagram. Para trocar/adicionar, cole o link do post aqui (https://www.instagram.com/p/CODIGO/ ou /reel/CODIGO/). O post precisa ser público.",
+      "embeds": [
+        "https://www.instagram.com/p/DNVxZzJuwy5/",
+        "https://www.instagram.com/p/C8FPnGPOGmU/",
+        "https://www.instagram.com/p/DNYSDcLu-et/",
+        "https://www.instagram.com/reel/C0RVAdguRX2/"
       ]
     }
   },
