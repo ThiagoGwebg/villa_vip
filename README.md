@@ -110,4 +110,3 @@ Campos:
 - As imagens são **placeholders ilustrados por categoria** (gerados em SVG, sem
   dependência externa). Trocar pelas fotos reais da loja é só apontar a `src`.
 - Dados de contato/marcas extraídos da coleta `villa_vip.json` (2026-05-16).
-# villa_vip
