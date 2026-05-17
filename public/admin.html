@@ -5,7 +5,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Painel BI · Villa Vip Country Store</title>
-  <meta name="description" content="Inteligência de catálogo da Villa Vip Country Store — análise de portfólio, preços, descontos e cobertura.">
+  <meta name="description"
+    content="Inteligência de catálogo da Villa Vip Country Store — análise de portfólio, preços, descontos e cobertura.">
+  <link rel="shortcut icon" href="assets/logo-mark.svg" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -35,11 +37,18 @@
       <div class="dash-top-actions">
         <span class="dash-stamp" id="stamp" aria-live="polite">Carregando dados…</span>
         <button type="button" class="dash-btn ghost" id="btnRefresh" title="Recarregar dados">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+            <path d="M21 3v6h-6" />
+          </svg>
           <span>Atualizar</span>
         </button>
         <a class="dash-btn ghost" href="/" title="Abrir o catálogo público">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9 12 2l9 7"/><path d="M5 9v11h14V9"/><path d="M9 20v-6h6v6"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 9 12 2l9 7" />
+            <path d="M5 9v11h14V9" />
+            <path d="M9 20v-6h6v6" />
+          </svg>
           <span>Catálogo</span>
         </a>
         <div class="dash-user">
@@ -47,7 +56,11 @@
           <span class="dash-uname" id="userName">—</span>
         </div>
         <button type="button" class="dash-btn solid" id="btnLogout" title="Encerrar sessão">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <path d="m16 17 5-5-5-5" />
+            <path d="M21 12H9" />
+          </svg>
           <span>Sair</span>
         </button>
       </div>
@@ -62,14 +75,22 @@
       <p>Compilando a inteligência do catálogo…</p>
     </div>
     <div class="dash-state err" id="errorState" hidden>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
       <p id="errorMsg">Não foi possível carregar os dados.</p>
       <button type="button" class="dash-btn solid" id="btnRetry">Tentar de novo</button>
     </div>
     <div class="dash-state err" id="denyState" hidden>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="11" width="18" height="11" rx="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      </svg>
       <p><strong>Acesso restrito a administradores</strong></p>
-      <p class="dash-state-sub">Sua conta está logada, mas não tem permissão para ver o painel de inteligência. Fale com o gestor da loja para liberar seu acesso.</p>
+      <p class="dash-state-sub">Sua conta está logada, mas não tem permissão para ver o painel de inteligência. Fale com
+        o gestor da loja para liberar seu acesso.</p>
       <div class="dash-state-actions">
         <a class="dash-btn ghost dark" href="/">Voltar ao catálogo</a>
         <button type="button" class="dash-btn solid" id="btnDenyLogout">Trocar de conta</button>
@@ -86,35 +107,62 @@
       <!-- KPI strip ---------------------------------------------------- -->
       <section class="kpi-grid" aria-label="Indicadores principais">
         <article class="kpi" data-tone="orange">
-          <span class="kpi-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h18"/></svg></span>
+          <span class="kpi-ic" aria-hidden="true"><svg viewBox="0 0 24 24">
+              <path d="M3 7h18M3 12h18M3 17h18" />
+            </svg></span>
           <div><b id="kProdutos">—</b><small>Produtos no catálogo</small></div>
         </article>
         <article class="kpi">
-          <span class="kpi-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+          <span class="kpi-ic" aria-hidden="true"><svg viewBox="0 0 24 24">
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg></span>
           <div><b id="kCategorias">—</b><small>Categorias ativas</small></div>
         </article>
         <article class="kpi">
-          <span class="kpi-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 7 12 3 4 7v10l8 4 8-4Z"/><path d="m4 7 8 4 8-4"/><path d="M12 21V11"/></svg></span>
+          <span class="kpi-ic" aria-hidden="true"><svg viewBox="0 0 24 24">
+              <path d="M20 7 12 3 4 7v10l8 4 8-4Z" />
+              <path d="m4 7 8 4 8-4" />
+              <path d="M12 21V11" />
+            </svg></span>
           <div><b id="kMarcas">—</b><small>Marcas representadas</small></div>
         </article>
         <article class="kpi" data-tone="orange">
-          <span class="kpi-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+          <span class="kpi-ic" aria-hidden="true"><svg viewBox="0 0 24 24">
+              <path d="M12 1v22" />
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg></span>
           <div><b id="kTicket">—</b><small>Ticket médio</small></div>
         </article>
         <article class="kpi">
-          <span class="kpi-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 4 5-6"/></svg></span>
+          <span class="kpi-ic" aria-hidden="true"><svg viewBox="0 0 24 24">
+              <path d="M3 3v18h18" />
+              <path d="m7 14 4-4 4 4 5-6" />
+            </svg></span>
           <div><b id="kValor">—</b><small>Valor somado do acervo</small></div>
         </article>
         <article class="kpi" data-tone="discount">
-          <span class="kpi-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></span>
+          <span class="kpi-ic" aria-hidden="true"><svg viewBox="0 0 24 24">
+              <line x1="19" y1="5" x2="5" y2="19" />
+              <circle cx="6.5" cy="6.5" r="2.5" />
+              <circle cx="17.5" cy="17.5" r="2.5" />
+            </svg></span>
           <div><b id="kPromo">—</b><small>Em promoção <i id="kPromoPct"></i></small></div>
         </article>
         <article class="kpi" data-tone="discount">
-          <span class="kpi-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
+          <span class="kpi-ic" aria-hidden="true"><svg viewBox="0 0 24 24">
+              <path d="M3 6h18" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg></span>
           <div><b id="kDesconto">—</b><small>Desconto médio (promo)</small></div>
         </article>
         <article class="kpi" data-tone="gold">
-          <span class="kpi-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9"/></svg></span>
+          <span class="kpi-ic" aria-hidden="true"><svg viewBox="0 0 24 24">
+              <polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9" />
+            </svg></span>
           <div><b id="kDestaque">—</b><small>Em destaque <i id="kDestaquePct"></i></small></div>
         </article>
       </section>
@@ -183,7 +231,8 @@
             <h2>Matriz marca × categoria</h2>
             <span class="card-sub">Cobertura do sortimento — número = produtos; cor = intensidade</span>
           </header>
-          <div class="chart heatmap" id="chMatriz" role="img" aria-label="Matriz de cobertura entre marca e categoria"></div>
+          <div class="chart heatmap" id="chMatriz" role="img" aria-label="Matriz de cobertura entre marca e categoria">
+          </div>
         </article>
 
       </section>
@@ -198,7 +247,13 @@
           </header>
           <div class="table-scroll">
             <table class="dash-table" id="tblCaros">
-              <thead><tr><th>Produto</th><th>Marca</th><th class="num">Preço</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Marca</th>
+                  <th class="num">Preço</th>
+                </tr>
+              </thead>
               <tbody></tbody>
             </table>
           </div>
@@ -211,7 +266,13 @@
           </header>
           <div class="table-scroll">
             <table class="dash-table" id="tblDescontos">
-              <thead><tr><th>Produto</th><th class="num">De → Por</th><th class="num">Off</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th class="num">De → Por</th>
+                  <th class="num">Off</th>
+                </tr>
+              </thead>
               <tbody></tbody>
             </table>
           </div>
@@ -224,7 +285,13 @@
           </header>
           <div class="table-scroll">
             <table class="dash-table" id="tblDestaques">
-              <thead><tr><th>Produto</th><th>Categoria</th><th class="num">Preço</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Categoria</th>
+                  <th class="num">Preço</th>
+                </tr>
+              </thead>
               <tbody></tbody>
             </table>
           </div>
