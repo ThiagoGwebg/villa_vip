@@ -1,209 +1,240 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#1c130b" />
-<meta name="description" content="Catálogo digital da Villa Vip Country Store — botas texanas, chapéus, camisas e acessórios country. Escolha e finalize pelo WhatsApp." />
-<title>Villa Vip Country Store — Catálogo Digital</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="/styles.css?v=3" />
-<link rel="icon" type="image/svg+xml" href="/assets/logo-mark.svg" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1c130b" />
+  <meta name="description"
+    content="Catálogo digital da Villa Vip Country Store — botas texanas, chapéus, camisas e acessórios country. Escolha e finalize pelo WhatsApp." />
+  <title>Villa Vip Country Store — Catálogo Digital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css?v=3" />
+  <link rel="icon" type="image/svg+xml" href="/assets/logo-mark.svg" />
 </head>
+
 <body>
 
-<!-- ===================== HEADER ===================== -->
-<header class="site-header" id="siteHeader">
-  <div class="wrap header-inner">
-    <a class="brand" href="/" aria-label="Villa Vip Country Store — início">
-      <span class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 240 200">
-          <path d="M120 80C104 82 80 80 58 72C38 64 22 50 14 36C26 46 48 52 70 52C92 52 110 60 120 78C130 60 148 52 170 52C192 52 214 46 226 36C218 50 202 64 182 72C160 80 136 82 120 80Z"/>
-          <path d="M78 84 L120 170 L162 84 L139 84 L120 126 L101 84 Z"/>
-        </svg>
-      </span>
-      <span class="brand-words">
-        <span class="brand-name">VILLA VIP</span>
-        <span class="brand-sub"><i>★</i> Country Store <i>★</i></span>
-      </span>
-    </a>
+  <!-- ===================== HEADER ===================== -->
+  <header class="site-header" id="siteHeader">
+    <div class="wrap header-inner">
+      <a class="brand" href="/" aria-label="Villa Vip Country Store — início">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 240 200">
+            <path
+              d="M120 80C104 82 80 80 58 72C38 64 22 50 14 36C26 46 48 52 70 52C92 52 110 60 120 78C130 60 148 52 170 52C192 52 214 46 226 36C218 50 202 64 182 72C160 80 136 82 120 80Z" />
+            <path d="M78 84 L120 170 L162 84 L139 84 L120 126 L101 84 Z" />
+          </svg>
+        </span>
+        <span class="brand-words">
+          <span class="brand-name">VILLA VIP</span>
+          <span class="brand-sub"><i>★</i> Country Store <i>★</i></span>
+        </span>
+      </a>
 
-    <div class="header-actions">
-      <button class="icon-btn" id="searchToggle" aria-label="Buscar produtos">
-        <svg viewBox="0 0 24 24" class="ico"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </button>
-      <button class="icon-btn cart-btn" id="cartToggle" aria-label="Abrir sacola">
-        <svg viewBox="0 0 24 24" class="ico"><path d="M6 7h12l-1.2 12.2a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8L6 7Z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
-        <span class="cart-count" id="cartCount" hidden>0</span>
-      </button>
+      <div class="header-actions">
+        <button class="icon-btn" id="searchToggle" aria-label="Buscar produtos">
+          <svg viewBox="0 0 24 24" class="ico">
+            <circle cx="11" cy="11" r="7" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </button>
+        <button class="icon-btn cart-btn" id="cartToggle" aria-label="Abrir sacola">
+          <svg viewBox="0 0 24 24" class="ico">
+            <path d="M6 7h12l-1.2 12.2a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8L6 7Z" />
+            <path d="M9 7V5a3 3 0 0 1 6 0v2" />
+          </svg>
+          <span class="cart-count" id="cartCount" hidden>0</span>
+        </button>
 
-      <!-- Botão Login / Perfil -->
-      <div class="auth-area" id="authArea">
-        <a href="/login.html" class="btn-login" id="btnLogin" hidden>Entrar</a>
-        
-        <div class="user-profile" id="userProfile" hidden>
-          <button class="user-avatar-btn" id="userAvatarBtn" aria-label="Menu do usuário">
-            <img src="/assets/avatar-default.png" alt="Avatar" id="userAvatarImg" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2Q4YzliMiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTIwIDIxdi0yYTRgNCAwIDAgMC00LTRoLTRhNCA0IDAgMCAwLTQgNHYyIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSI3IiByPSI0Ii8+PC9zdmc+'" />
-            <span class="user-name" id="userNameLabel">Perfil</span>
-          </button>
-          
-          <div class="user-dropdown" id="userDropdown" hidden>
-            <div class="user-dropdown-header">
-              <strong id="ddUserName">Usuário</strong>
-              <small id="ddUserEmail">email@example.com</small>
+        <!-- Botão Login / Perfil -->
+        <div class="auth-area" id="authArea">
+          <a href="/login.html" class="btn-login" id="btnLogin" hidden>Entrar</a>
+
+          <div class="user-profile" id="userProfile" hidden>
+            <button class="user-avatar-btn" id="userAvatarBtn" aria-label="Menu do usuário">
+              <img src="/assets/avatar-default.png" alt="Avatar" id="userAvatarImg"
+                onerror="this.src='data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2Q4YzliMiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTIwIDIxdi0yYTRgNCAwIDAgMC00LTRoLTRhNCA0IDAgMCAwLTQgNHYyIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSI3IiByPSI0Ii8+PC9zdmc+'" />
+              <span class="user-name" id="userNameLabel">Perfil</span>
+            </button>
+
+            <div class="user-dropdown" id="userDropdown" hidden>
+              <div class="user-dropdown-header">
+                <strong id="ddUserName">Usuário</strong>
+                <small id="ddUserEmail">email@example.com</small>
+              </div>
+              <a href="#" class="dd-item" id="btnMyOrders">Meus Pedidos</a>
+              <a href="#" class="dd-item" id="btnMyProfile">Editar Perfil</a>
+              <div class="dd-divider"></div>
+              <button class="dd-item logout" id="btnLogout">Sair</button>
             </div>
-            <a href="#" class="dd-item" id="btnMyOrders">Meus Pedidos</a>
-            <a href="#" class="dd-item" id="btnMyProfile">Editar Perfil</a>
-            <div class="dd-divider"></div>
-            <button class="dd-item logout" id="btnLogout">Sair</button>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Barra de busca expansível -->
-  <div class="searchbar" id="searchbar" hidden>
-    <div class="wrap">
-      <input type="search" id="searchInput" placeholder="Buscar bota, chapéu, marca…" autocomplete="off" />
-    </div>
-  </div>
-</header>
-
-<!-- ===================== HERO ===================== -->
-<section class="hero">
-  <div class="wrap hero-inner">
-    <p class="hero-eyebrow">Catálogo Digital Oficial</p>
-    <h1 class="hero-title">O melhor do estilo <span>country</span> na palma da mão</h1>
-    <p class="hero-sub">Escolha o modelo, o tamanho e finalize direto no nosso WhatsApp — rápido, sem complicação.</p>
-    <div class="hero-steps">
-      <span><b>1</b> Navegue</span>
-      <span class="dash"></span>
-      <span><b>2</b> Escolha o tamanho</span>
-      <span class="dash"></span>
-      <span><b>3</b> Fale no WhatsApp</span>
-    </div>
-  </div>
-</section>
-
-<!-- ===================== CATÁLOGO ===================== -->
-<main class="wrap catalog">
-
-  <!-- Categorias -->
-  <nav class="categories" id="categories" aria-label="Categorias"></nav>
-
-  <!-- Filtros -->
-  <div class="filters">
-    <div class="brand-chips" id="brandChips" aria-label="Filtrar por marca"></div>
-    <div class="sort">
-      <label for="sortSelect" class="visually-hidden">Ordenar</label>
-      <select id="sortSelect">
-        <option value="destaque">Destaques primeiro</option>
-        <option value="preco-asc">Menor preço</option>
-        <option value="preco-desc">Maior preço</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="results-bar">
-    <span id="resultsCount">—</span>
-    <button class="link-btn" id="clearFilters" hidden>Limpar filtros</button>
-  </div>
-
-  <!-- Grid -->
-  <section class="grid" id="grid" aria-live="polite"></section>
-
-  <!-- Estado vazio -->
-  <div class="empty" id="emptyState" hidden>
-    <div class="empty-mark" aria-hidden="true">
-      <svg viewBox="0 0 240 200"><path d="M120 80C104 82 80 80 58 72C38 64 22 50 14 36C26 46 48 52 70 52C92 52 110 60 120 78C130 60 148 52 170 52C192 52 214 46 226 36C218 50 202 64 182 72C160 80 136 82 120 80Z"/><path d="M78 84 L120 170 L162 84 L139 84 L120 126 L101 84 Z"/></svg>
-    </div>
-    <p>Nenhum produto encontrado com esses filtros.</p>
-    <button class="btn-ghost" id="emptyReset">Ver todos os produtos</button>
-  </div>
-</main>
-
-<!-- ===================== FOOTER ===================== -->
-<footer class="site-footer">
-  <div class="wrap footer-inner">
-    <div class="footer-brand">
-      <span class="brand-mark sm" aria-hidden="true">
-        <svg viewBox="0 0 240 200"><path d="M120 80C104 82 80 80 58 72C38 64 22 50 14 36C26 46 48 52 70 52C92 52 110 60 120 78C130 60 148 52 170 52C192 52 214 46 226 36C218 50 202 64 182 72C160 80 136 82 120 80Z"/><path d="M78 84 L120 170 L162 84 L139 84 L120 126 L101 84 Z"/></svg>
-      </span>
-      <div>
-        <strong>Villa Vip Country Store</strong>
-        <p id="footAddr"></p>
+    <!-- Barra de busca expansível -->
+    <div class="searchbar" id="searchbar" hidden>
+      <div class="wrap">
+        <input type="search" id="searchInput" placeholder="Buscar bota, chapéu, marca…" autocomplete="off" />
       </div>
     </div>
-    <div class="footer-cols" id="footerInfo"></div>
-  </div>
-  <div class="footer-credit"><span id="footCredit"></span></div>
-</footer>
+  </header>
 
-<!-- ===================== WHATSAPP FLUTUANTE ===================== -->
-<a class="wa-float" id="waFloat" target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
-  <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C9 3 3.5 8.5 3.5 15.5c0 2.5.7 4.8 1.9 6.8L3 29l6.9-2.3c1.9 1 4 1.6 6.1 1.6 7 0 12.5-5.5 12.5-12.5S23 3 16 3Zm0 22.7c-1.9 0-3.7-.5-5.3-1.5l-.4-.2-4.1 1.3 1.3-4-.3-.4c-1.1-1.7-1.6-3.6-1.6-5.6 0-5.7 4.7-10.4 10.4-10.4S26.4 9.8 26.4 15.5 21.7 25.7 16 25.7Zm5.7-7.7c-.3-.2-1.9-.9-2.1-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.5-1.6-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.6c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.6l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1.1 1-1.1 2.5s1.1 2.9 1.3 3.1c.2.2 2.2 3.4 5.4 4.8.7.3 1.3.5 1.8.6.7.2 1.4.2 1.9.1.6-.1 1.9-.8 2.1-1.5.3-.7.3-1.4.2-1.5-.1-.2-.3-.2-.6-.4Z"/></svg>
-</a>
-
-<!-- ===================== MODAL PRODUTO ===================== -->
-<div class="sheet-overlay" id="sheetOverlay" hidden>
-  <div class="sheet" id="productSheet" role="dialog" aria-modal="true" aria-labelledby="sheetName">
-    <button class="sheet-close" id="sheetClose" aria-label="Fechar">&times;</button>
-    <div class="sheet-media" id="sheetMedia"></div>
-    <div class="sheet-body">
-      <span class="sheet-brand" id="sheetBrand"></span>
-      <h2 class="sheet-name" id="sheetName"></h2>
-      <p class="sheet-desc" id="sheetDesc"></p>
-      <div class="sheet-price" id="sheetPrice"></div>
-
-      <div class="opt-block">
-        <label class="opt-label">Tamanho <em id="sizeReq">— selecione</em></label>
-        <div class="size-grid" id="sizeGrid"></div>
+  <!-- ===================== HERO ===================== -->
+  <section class="hero">
+    <div class="wrap hero-inner">
+      <p class="hero-eyebrow">Catálogo Digital Oficial</p>
+      <h1 class="hero-title">Seu estilo <span>country</span>, do jeito certo!</h1>
+      <p class="hero-sub">Escolha o modelo, o tamanho e finalize direto no nosso WhatsApp — rápido, sem complicação.</p>
+      <div class="hero-steps">
+        <span><b>1</b> Navegue</span>
+        <span class="dash"></span>
+        <span><b>2</b> Escolha o tamanho</span>
+        <span class="dash"></span>
+        <span><b>3</b> Fale no WhatsApp</span>
       </div>
+    </div>
+  </section>
 
-      <div class="opt-block qty-block">
-        <label class="opt-label">Quantidade</label>
-        <div class="qty">
-          <button id="qtyMinus" aria-label="Diminuir">−</button>
-          <span id="qtyValue">1</span>
-          <button id="qtyPlus" aria-label="Aumentar">+</button>
+  <!-- ===================== CATÁLOGO ===================== -->
+  <main class="wrap catalog">
+
+    <!-- Categorias -->
+    <nav class="categories" id="categories" aria-label="Categorias"></nav>
+
+    <!-- Filtros -->
+    <div class="filters">
+      <div class="brand-chips" id="brandChips" aria-label="Filtrar por marca"></div>
+      <div class="sort">
+        <label for="sortSelect" class="visually-hidden">Ordenar</label>
+        <select id="sortSelect">
+          <option value="destaque">Destaques primeiro</option>
+          <option value="preco-asc">Menor preço</option>
+          <option value="preco-desc">Maior preço</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="results-bar">
+      <span id="resultsCount">—</span>
+      <button class="link-btn" id="clearFilters" hidden>Limpar filtros</button>
+    </div>
+
+    <!-- Grid -->
+    <section class="grid" id="grid" aria-live="polite"></section>
+
+    <!-- Estado vazio -->
+    <div class="empty" id="emptyState" hidden>
+      <div class="empty-mark" aria-hidden="true">
+        <svg viewBox="0 0 240 200">
+          <path
+            d="M120 80C104 82 80 80 58 72C38 64 22 50 14 36C26 46 48 52 70 52C92 52 110 60 120 78C130 60 148 52 170 52C192 52 214 46 226 36C218 50 202 64 182 72C160 80 136 82 120 80Z" />
+          <path d="M78 84 L120 170 L162 84 L139 84 L120 126 L101 84 Z" />
+        </svg>
+      </div>
+      <p>Nenhum produto encontrado com esses filtros.</p>
+      <button class="btn-ghost" id="emptyReset">Ver todos os produtos</button>
+    </div>
+  </main>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div class="footer-brand">
+        <span class="brand-mark sm" aria-hidden="true">
+          <svg viewBox="0 0 240 200">
+            <path
+              d="M120 80C104 82 80 80 58 72C38 64 22 50 14 36C26 46 48 52 70 52C92 52 110 60 120 78C130 60 148 52 170 52C192 52 214 46 226 36C218 50 202 64 182 72C160 80 136 82 120 80Z" />
+            <path d="M78 84 L120 170 L162 84 L139 84 L120 126 L101 84 Z" />
+          </svg>
+        </span>
+        <div>
+          <strong>Villa Vip Country Store</strong>
+          <p id="footAddr"></p>
         </div>
       </div>
+      <div class="footer-cols" id="footerInfo"></div>
+    </div>
+    <div class="footer-credit"><span id="footCredit"></span></div>
+  </footer>
 
-      <div class="sheet-actions">
-        <button class="btn-wa" id="btnBuyWa">
-          <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C9 3 3.5 8.5 3.5 15.5c0 2.5.7 4.8 1.9 6.8L3 29l6.9-2.3c1.9 1 4 1.6 6.1 1.6 7 0 12.5-5.5 12.5-12.5S23 3 16 3Zm5.7 15c-.3-.2-1.9-.9-2.1-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.5-1.6-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.6c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.6l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1.1 1-1.1 2.5s1.1 2.9 1.3 3.1c.2.2 2.2 3.4 5.4 4.8.7.3 1.3.5 1.8.6.7.2 1.4.2 1.9.1.6-.1 1.9-.8 2.1-1.5.3-.7.3-1.4.2-1.5-.1-.2-.3-.2-.6-.4Z"/></svg>
-          Pedir pelo WhatsApp
-        </button>
-        <button class="btn-ghost" id="btnAddCart">Adicionar à sacola</button>
+  <!-- ===================== WHATSAPP FLUTUANTE ===================== -->
+  <a class="wa-float" id="waFloat" target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
+    <svg viewBox="0 0 32 32" aria-hidden="true">
+      <path
+        d="M16 3C9 3 3.5 8.5 3.5 15.5c0 2.5.7 4.8 1.9 6.8L3 29l6.9-2.3c1.9 1 4 1.6 6.1 1.6 7 0 12.5-5.5 12.5-12.5S23 3 16 3Zm0 22.7c-1.9 0-3.7-.5-5.3-1.5l-.4-.2-4.1 1.3 1.3-4-.3-.4c-1.1-1.7-1.6-3.6-1.6-5.6 0-5.7 4.7-10.4 10.4-10.4S26.4 9.8 26.4 15.5 21.7 25.7 16 25.7Zm5.7-7.7c-.3-.2-1.9-.9-2.1-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.5-1.6-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.6c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.6l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1.1 1-1.1 2.5s1.1 2.9 1.3 3.1c.2.2 2.2 3.4 5.4 4.8.7.3 1.3.5 1.8.6.7.2 1.4.2 1.9.1.6-.1 1.9-.8 2.1-1.5.3-.7.3-1.4.2-1.5-.1-.2-.3-.2-.6-.4Z" />
+    </svg>
+  </a>
+
+  <!-- ===================== MODAL PRODUTO ===================== -->
+  <div class="sheet-overlay" id="sheetOverlay" hidden>
+    <div class="sheet" id="productSheet" role="dialog" aria-modal="true" aria-labelledby="sheetName">
+      <button class="sheet-close" id="sheetClose" aria-label="Fechar">&times;</button>
+      <div class="sheet-media" id="sheetMedia"></div>
+      <div class="sheet-body">
+        <span class="sheet-brand" id="sheetBrand"></span>
+        <h2 class="sheet-name" id="sheetName"></h2>
+        <p class="sheet-desc" id="sheetDesc"></p>
+        <div class="sheet-price" id="sheetPrice"></div>
+
+        <div class="opt-block">
+          <label class="opt-label">Tamanho <em id="sizeReq">— selecione</em></label>
+          <div class="size-grid" id="sizeGrid"></div>
+        </div>
+
+        <div class="opt-block qty-block">
+          <label class="opt-label">Quantidade</label>
+          <div class="qty">
+            <button id="qtyMinus" aria-label="Diminuir">−</button>
+            <span id="qtyValue">1</span>
+            <button id="qtyPlus" aria-label="Aumentar">+</button>
+          </div>
+        </div>
+
+        <div class="sheet-actions">
+          <button class="btn-wa" id="btnBuyWa">
+            <svg viewBox="0 0 32 32" aria-hidden="true">
+              <path
+                d="M16 3C9 3 3.5 8.5 3.5 15.5c0 2.5.7 4.8 1.9 6.8L3 29l6.9-2.3c1.9 1 4 1.6 6.1 1.6 7 0 12.5-5.5 12.5-12.5S23 3 16 3Zm5.7 15c-.3-.2-1.9-.9-2.1-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.5-1.6-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.6c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.6l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1.1 1-1.1 2.5s1.1 2.9 1.3 3.1c.2.2 2.2 3.4 5.4 4.8.7.3 1.3.5 1.8.6.7.2 1.4.2 1.9.1.6-.1 1.9-.8 2.1-1.5.3-.7.3-1.4.2-1.5-.1-.2-.3-.2-.6-.4Z" />
+            </svg>
+            Pedir pelo WhatsApp
+          </button>
+          <button class="btn-ghost" id="btnAddCart">Adicionar à sacola</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- ===================== SACOLA ===================== -->
-<div class="sheet-overlay" id="cartOverlay" hidden>
-  <aside class="cart-drawer" id="cartDrawer" role="dialog" aria-modal="true" aria-label="Sacola">
-    <div class="cart-head">
-      <h2>Sua sacola</h2>
-      <button class="sheet-close" id="cartClose" aria-label="Fechar">&times;</button>
-    </div>
-    <div class="cart-items" id="cartItems"></div>
-    <div class="cart-foot">
-      <div class="cart-total"><span>Total estimado</span><strong id="cartTotal">R$ 0,00</strong></div>
-      <p class="cart-note">Valores a confirmar com a loja no WhatsApp.</p>
-      <button class="btn-wa lg" id="btnCheckoutWa">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C9 3 3.5 8.5 3.5 15.5c0 2.5.7 4.8 1.9 6.8L3 29l6.9-2.3c1.9 1 4 1.6 6.1 1.6 7 0 12.5-5.5 12.5-12.5S23 3 16 3Z"/></svg>
-        Finalizar pedido no WhatsApp
-      </button>
-    </div>
-  </aside>
-</div>
+  <!-- ===================== SACOLA ===================== -->
+  <div class="sheet-overlay" id="cartOverlay" hidden>
+    <aside class="cart-drawer" id="cartDrawer" role="dialog" aria-modal="true" aria-label="Sacola">
+      <div class="cart-head">
+        <h2>Sua sacola</h2>
+        <button class="sheet-close" id="cartClose" aria-label="Fechar">&times;</button>
+      </div>
+      <div class="cart-items" id="cartItems"></div>
+      <div class="cart-foot">
+        <div class="cart-total"><span>Total estimado</span><strong id="cartTotal">R$ 0,00</strong></div>
+        <p class="cart-note">Valores a confirmar com a loja no WhatsApp.</p>
+        <button class="btn-wa lg" id="btnCheckoutWa">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <path
+              d="M16 3C9 3 3.5 8.5 3.5 15.5c0 2.5.7 4.8 1.9 6.8L3 29l6.9-2.3c1.9 1 4 1.6 6.1 1.6 7 0 12.5-5.5 12.5-12.5S23 3 16 3Z" />
+          </svg>
+          Finalizar pedido no WhatsApp
+        </button>
+      </div>
+    </aside>
+  </div>
 
-<div class="toast" id="toast" hidden></div>
+  <div class="toast" id="toast" hidden></div>
 
-<script src="/app.js?v=3"></script>
+  <script src="/app.js?v=3"></script>
 </body>
+
 </html>
