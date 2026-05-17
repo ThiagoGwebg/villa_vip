@@ -28,5 +28,99 @@
     "TX Farm",
     "Austin Western"
   ],
+  "social": {
+    "clientes": {
+      "numero": "+2.000",
+      "rotulo": "clientes atendidos"
+    },
+    "google": {
+      "nota": 5.0,
+      "total": 33,
+      "url": "https://www.google.com/maps/search/?api=1&query=-22.4358495,-46.9734401",
+      "_comentario": "Avaliações reais do Google (mai/2026). Atualize aqui quando surgirem novas. 'total' = nº total no Google.",
+      "avaliacoes": [
+        {
+          "autor": "Mário Maldonado",
+          "nota": 5,
+          "quando": "4 anos atrás",
+          "texto": "Melhor loja da região, sem sombras de dúvida. Negócio familiar tocado com amor e honestidade, produtos da melhor qualidade e atendimento PERFEITO. Recomendo sempre."
+        },
+        {
+          "autor": "Rachel Chaib",
+          "nota": 5,
+          "quando": "4 anos atrás",
+          "texto": "Amei loja bem bacana, estilo cowntry, e um super atendimento!!! Parabéns Tiago!!!"
+        },
+        {
+          "autor": "Angela Duzo",
+          "nota": 5,
+          "quando": "4 anos atrás",
+          "texto": "Amei... um ótimo atendimento.. Botas lindas.. roupas maravilhosas.."
+        },
+        {
+          "autor": "Thalita Mantovani",
+          "nota": 5,
+          "quando": "3 anos atrás",
+          "texto": "O melhor atendimento 👏🏽🥰"
+        },
+        {
+          "autor": "Venicios Manoel Ferreira",
+          "nota": 5,
+          "quando": "3 anos atrás",
+          "texto": "Excelente atendimento"
+        },
+        {
+          "autor": "Rosa Coser",
+          "nota": 5,
+          "quando": "4 anos atrás",
+          "texto": "Fui muito bem atendida."
+        },
+        {
+          "autor": "Andréia Cristina Franco da Cunha",
+          "nota": 5,
+          "quando": "6 anos atrás",
+          "texto": "Sempre muito bem recebida"
+        },
+        {
+          "autor": "FG REAL (GLEISON)",
+          "nota": 5,
+          "quando": "6 anos atrás",
+          "texto": "Atendimento excelente"
+        },
+        {
+          "autor": "Rodrigo Vilares",
+          "nota": 5,
+          "quando": "7 anos atrás",
+          "texto": "Muito bem atendido"
+        },
+        {
+          "autor": "Willian Lima",
+          "nota": 5,
+          "quando": "7 anos atrás",
+          "texto": "Ótimo atendimento"
+        },
+        {
+          "autor": "Ana Paula Zaniboni",
+          "nota": 5,
+          "quando": "5 anos atrás",
+          "texto": "Adoro!"
+        }
+      ]
+    },
+    "instagram": {
+      "handle": "lojavillavip",
+      "url": "https://instagram.com/lojavillavip",
+      "chamada": "Novidades, looks country e bastidores da loja — siga a gente!",
+      "_comentario": "Coloque as imagens em public/assets/insta/ e aponte 'img'. Cada post linka para 'url'. Sem imagem, exibe um quadro com a marca.",
+      "posts": [
+        { "img": "/assets/insta/post1.jpg", "url": "https://www.instagram.com/p/DNVxZzJuwy5/", "legenda": "Linha masculina" },
+        { "img": "/assets/insta/post2.jpg", "url": "https://www.instagram.com/p/C8FPnGPOGmU/", "legenda": "Novidades na loja" },
+        { "img": "/assets/insta/post3.jpg", "url": "https://instagram.com/lojavillavip", "legenda": "Botas texanas" },
+        { "img": "/assets/insta/post4.jpg", "url": "https://instagram.com/lojavillavip", "legenda": "Chapéus" },
+        { "img": "/assets/insta/post5.jpg", "url": "https://instagram.com/lojavillavip", "legenda": "Estilo country" },
+        { "img": "/assets/insta/post6.jpg", "url": "https://instagram.com/lojavillavip", "legenda": "Acessórios" }
+      ]
+    }
+  },
   "creditoRodape": "Catálogo digital desenvolvido pela Sync Services"
 }

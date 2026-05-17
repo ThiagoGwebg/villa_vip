@@ -1,23 +1,28 @@
 const supabase = require('../config/supabase');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 
 const register = async (req, res) => {
   const { nome, email, senha } = req.body;
 
   try {
-    const senhaHash = await bcrypt.hash(senha, 10);
-    const { data, error } = await supabase
-      .from('users')
-      .insert([{ nome, email, senha_hash: senhaHash }])
-      .select();
+    // Usando o Auth Nativo do Supabase (que dispara o e-mail de confirmação)
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password: senha,
+      options: {
+        data: {
+          nome: nome
+        }
+      }
+    });
 
     if (error) {
       console.error("Supabase Error:", error);
       return res.status(400).json({ message: error.message });
     }
-    res.status(201).json({ message: 'Usuário criado com sucesso' });
+    
+    res.status(201).json({ message: 'Usuário criado com sucesso! Verifique seu e-mail.' });
   } catch (error) {
+    console.error("Server Error:", error);
     res.status(500).json({ message: 'Erro no servidor' });
   }
 };
@@ -26,20 +31,33 @@ const login = async (req, res) => {
   const { email, senha } = req.body;
 
   try {
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .single();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password: senha,
+    });
 
-    if (error || !user) return res.status(401).json({ message: 'Credenciais inválidas' });
+    if (error) {
+      // Traduzindo mensagens comuns para pt-BR no front ou mostrando direto
+      let msg = error.message;
+      if (msg === 'Email not confirmed') msg = 'Por favor, confirme seu e-mail antes de entrar.';
+      if (msg === 'Invalid login credentials') msg = 'E-mail ou senha incorretos.';
+      
+      return res.status(401).json({ message: msg });
+    }
 
-    const isMatch = await bcrypt.compare(senha, user.senha_hash);
-    if (!isMatch) return res.status(401).json({ message: 'Credenciais inválidas' });
+    const { session, user } = data;
 
-    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token, user: { id: user.id, nome: user.nome, email: user.email } });
+    // Retorna o formato exato que o frontend já espera
+    res.json({ 
+      token: session.access_token, 
+      user: { 
+        id: user.id, 
+        nome: user.user_metadata?.nome || user.email.split('@')[0], 
+        email: user.email 
+      } 
+    });
   } catch (error) {
+    console.error("Server Error:", error);
     res.status(500).json({ message: 'Erro no servidor' });
   }
 };

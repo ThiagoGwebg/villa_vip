@@ -1421,3 +1421,351 @@ select {
   background: #fdeaea;
   color: #b71c1c;
 }
+
+/* ---------------- PROVA SOCIAL (AVALIAÇÕES + INSTAGRAM) ---------------- */
+.social-proof {
+  background: var(--cream);
+  padding: 10px 0 56px;
+}
+
+/* Faixa de números */
+.stats-band {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  background: var(--wood-900);
+  background-image: var(--wood-grain);
+  border: 1px solid rgba(255, 255, 255, .06);
+  border-radius: var(--radius);
+  padding: 22px 14px;
+  margin-bottom: 44px;
+  box-shadow: var(--shadow);
+}
+
+.stats-band .stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  color: #d8c9b2;
+}
+
+.stats-band .stat+.stat {
+  border-left: 1px solid rgba(255, 255, 255, .1);
+}
+
+.stats-band .stat b {
+  font-family: "Anton", sans-serif;
+  font-weight: 400;
+  font-size: clamp(22px, 5vw, 32px);
+  color: #fff;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  line-height: 1;
+}
+
+.stats-band .stat b i {
+  font-style: normal;
+  color: var(--orange);
+  font-size: .7em;
+}
+
+.stats-band a.stat b {
+  color: var(--orange-bright);
+}
+
+.stats-band .stat span {
+  font-family: "Oswald", sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.stats-band a.stat {
+  transition: transform .15s;
+}
+
+.stats-band a.stat:hover {
+  transform: translateY(-2px);
+}
+
+/* Cabeçalho de seção */
+.sec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.sec-head h2 {
+  font-family: "Anton", sans-serif;
+  font-weight: 400;
+  font-size: clamp(22px, 5vw, 30px);
+  letter-spacing: .01em;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sec-head h2 svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: var(--orange);
+  stroke-width: 2;
+}
+
+/* Selo de nota do Google */
+.rev-google {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  transition: border-color .15s;
+}
+
+.rev-google:hover {
+  border-color: var(--orange);
+}
+
+.rev-google strong {
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.rev-google em {
+  font-style: normal;
+}
+
+.rev-google-cta {
+  color: var(--orange);
+  font-weight: 600;
+}
+
+.rev-google-stars {
+  letter-spacing: 1px;
+}
+
+.rev-google-stars .on {
+  color: #f5a623;
+}
+
+.rev-google-stars .off {
+  color: var(--line);
+}
+
+/* Grade de avaliações */
+.reviews {
+  margin-bottom: 52px;
+}
+
+.rev-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.rev-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rev-top {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.rev-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: linear-gradient(150deg, var(--orange), var(--orange-deep));
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-family: "Oswald", sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.rev-id {
+  flex: 1;
+  min-width: 0;
+}
+
+.rev-id b {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  display: block;
+  line-height: 1.2;
+}
+
+.rev-id small {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.rev-g {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  font-family: "Arial", sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #4285f4;
+}
+
+.rev-stars {
+  letter-spacing: 2px;
+  font-size: 15px;
+}
+
+.rev-stars .on {
+  color: #f5a623;
+}
+
+.rev-stars .off {
+  color: var(--line);
+}
+
+.rev-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+/* Instagram */
+.insta-sub {
+  margin: -10px 0 18px;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.btn-insta {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 20px;
+  border-radius: 30px;
+  color: #fff;
+  font-family: "Oswald", sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  background: linear-gradient(120deg, #f58529, #dd2a7b 55%, #8134af);
+  transition: filter .15s, transform .1s;
+}
+
+.btn-insta:hover {
+  filter: brightness(1.07);
+  transform: translateY(-1px);
+}
+
+.insta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.insta-tile {
+  position: relative;
+  aspect-ratio: 1/1;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: linear-gradient(150deg, #3e2a17, #6b4423);
+  display: block;
+}
+
+.insta-tile img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.insta-tile .insta-bg {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, .12);
+}
+
+.insta-tile .insta-bg svg {
+  width: 55%;
+  fill: currentColor;
+}
+
+.insta-tile .insta-ov {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(20, 12, 5, .35);
+  opacity: 0;
+  transition: opacity .18s;
+}
+
+.insta-tile .insta-ov svg {
+  width: 30px;
+  height: 30px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.insta-tile:hover .insta-ov,
+.insta-tile:focus-visible .insta-ov {
+  opacity: 1;
+}
+
+.insta-tile.no-img .insta-ov {
+  opacity: 1;
+  background: rgba(20, 12, 5, .2);
+}
+
+@media (min-width:560px) {
+  .rev-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .insta-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+@media (min-width:900px) {
+  .rev-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .stats-band {
+    padding: 28px 20px;
+  }
+}

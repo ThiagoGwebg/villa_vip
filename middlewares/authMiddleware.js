@@ -1,6 +1,13 @@
-const jwt = require('jsonwebtoken');
+const supabase = require('../config/supabase');
 
-const authMiddleware = (req, res, next) => {
+/**
+ * Valida a sessão a partir do access_token do Supabase Auth.
+ *
+ * O login agora emite `session.access_token` (Supabase), que NÃO é assinado
+ * com JWT_SECRET — por isso a verificação é feita contra o próprio Supabase
+ * via `auth.getUser(token)`, e não com jsonwebtoken.
+ */
+const authMiddleware = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) {
@@ -8,11 +15,19 @@ const authMiddleware = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    const { data, error } = await supabase.auth.getUser(token);
+
+    if (error || !data?.user) {
+      // 401: falha de autenticação (sessão inválida/expirada).
+      // 403 fica reservado para "autenticado, porém sem permissão" (admin).
+      return res.status(401).json({ message: 'Sessão inválida ou expirada' });
+    }
+
+    req.user = data.user;
     next();
-  } catch (error) {
-    res.status(403).json({ message: 'Token inválido' });
+  } catch (err) {
+    console.error('Auth middleware error:', err);
+    res.status(500).json({ message: 'Erro ao validar a sessão' });
   }
 };
 
