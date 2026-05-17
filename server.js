@@ -17,6 +17,7 @@ const path = require("path");
 const fs = require("fs");
 const authRoutes = require("./routes/auth");
 const authMiddleware = require("./middlewares/authMiddleware");
+const adminMiddleware = require("./middlewares/adminMiddleware");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -295,8 +296,9 @@ function buildAnalytics() {
   };
 }
 
-// Protegido: exige sessão Supabase válida (Authorization: Bearer <token>).
-app.get("/api/analytics", authMiddleware, (_req, res) => {
+// Protegido: sessão Supabase válida (authMiddleware) + e-mail na allowlist
+// de administradores (adminMiddleware). Bearer token no header Authorization.
+app.get("/api/analytics", authMiddleware, adminMiddleware, (_req, res) => {
   res.json(buildAnalytics());
 });
 

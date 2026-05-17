@@ -18,7 +18,9 @@ const authMiddleware = async (req, res, next) => {
     const { data, error } = await supabase.auth.getUser(token);
 
     if (error || !data?.user) {
-      return res.status(403).json({ message: 'Token inválido ou expirado' });
+      // 401: falha de autenticação (sessão inválida/expirada).
+      // 403 fica reservado para "autenticado, porém sem permissão" (admin).
+      return res.status(401).json({ message: 'Sessão inválida ou expirada' });
     }
 
     req.user = data.user;

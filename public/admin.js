@@ -42,8 +42,14 @@ async function load() {
       cache: "no-store",
       headers: { Authorization: "Bearer " + token },
     });
-    // Sessão inválida/expirada → encerra e manda relogar.
-    if (res.status === 401 || res.status === 403) return logout(true);
+    // 401: sessão inválida/expirada → encerra e manda relogar.
+    if (res.status === 401) return logout(true);
+    // 403: logado, mas e-mail fora da allowlist de admin → tela de bloqueio.
+    if (res.status === 403) {
+      setState("deny");
+      $("stamp").textContent = "Acesso restrito";
+      return;
+    }
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     render(data);
@@ -58,6 +64,7 @@ async function load() {
 function setState(s) {
   $("loadingState").hidden = s !== "loading";
   $("errorState").hidden = s !== "error";
+  $("denyState").hidden = s !== "deny";
   $("dashContent").hidden = s !== "ready";
   $("dashMain").setAttribute("aria-busy", s === "loading" ? "true" : "false");
   if (s === "loading") $("stamp").textContent = "Carregando dados…";
@@ -322,6 +329,7 @@ function tableDestaques(rows) {
 
 /* ---------- Ações ----------------------------------------------------- */
 $("btnLogout").addEventListener("click", () => logout(true));
+$("btnDenyLogout").addEventListener("click", () => logout(true));
 
 function refresh(btn) {
   btn.classList.add("is-spin");

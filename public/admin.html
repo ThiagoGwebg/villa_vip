@@ -66,6 +66,15 @@
       <p id="errorMsg">Não foi possível carregar os dados.</p>
       <button type="button" class="dash-btn solid" id="btnRetry">Tentar de novo</button>
     </div>
+    <div class="dash-state err" id="denyState" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <p><strong>Acesso restrito a administradores</strong></p>
+      <p class="dash-state-sub">Sua conta está logada, mas não tem permissão para ver o painel de inteligência. Fale com o gestor da loja para liberar seu acesso.</p>
+      <div class="dash-state-actions">
+        <a class="dash-btn ghost dark" href="/">Voltar ao catálogo</a>
+        <button type="button" class="dash-btn solid" id="btnDenyLogout">Trocar de conta</button>
+      </div>
+    </div>
 
     <div id="dashContent" hidden>
 
