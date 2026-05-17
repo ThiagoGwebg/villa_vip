@@ -31,6 +31,7 @@
       if (res.ok) {
         const data = await res.json();
         localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user)); // <-- Correção: Salvando o usuário!
         window.location.href = '/';
       } else {
         alert('Erro ao realizar login');
