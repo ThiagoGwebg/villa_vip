@@ -15,6 +15,7 @@ da proposta.
 Pré-requisito: **Node.js 18+**.
 
 ```bash
+git clone https://github.com/ThiagoGwebg/villa_vip.git
 cd "catalogo-villa-vip"
 npm install
 npm start
