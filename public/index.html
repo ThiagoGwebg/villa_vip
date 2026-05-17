@@ -38,6 +38,29 @@
         <svg viewBox="0 0 24 24" class="ico"><path d="M6 7h12l-1.2 12.2a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8L6 7Z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
         <span class="cart-count" id="cartCount" hidden>0</span>
       </button>
+
+      <!-- Botão Login / Perfil -->
+      <div class="auth-area" id="authArea">
+        <a href="/login.html" class="btn-login" id="btnLogin" hidden>Entrar</a>
+        
+        <div class="user-profile" id="userProfile" hidden>
+          <button class="user-avatar-btn" id="userAvatarBtn" aria-label="Menu do usuário">
+            <img src="/assets/avatar-default.png" alt="Avatar" id="userAvatarImg" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2Q4YzliMiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTIwIDIxdi0yYTRgNCAwIDAgMC00LTRoLTRhNCA0IDAgMCAwLTQgNHYyIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSI3IiByPSI0Ii8+PC9zdmc+'" />
+            <span class="user-name" id="userNameLabel">Perfil</span>
+          </button>
+          
+          <div class="user-dropdown" id="userDropdown" hidden>
+            <div class="user-dropdown-header">
+              <strong id="ddUserName">Usuário</strong>
+              <small id="ddUserEmail">email@example.com</small>
+            </div>
+            <a href="#" class="dd-item" id="btnMyOrders">Meus Pedidos</a>
+            <a href="#" class="dd-item" id="btnMyProfile">Editar Perfil</a>
+            <div class="dd-divider"></div>
+            <button class="dd-item logout" id="btnLogout">Sair</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

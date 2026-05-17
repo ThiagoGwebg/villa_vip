@@ -20,7 +20,18 @@ const state = {
   size: null,
   qty: 1,
   cart: loadCart(),
+  user: loadUser(),
 };
+
+/** Lê usuário logado */
+function loadUser() {
+  try {
+    const raw = localStorage.getItem("user");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
 /** Lê a sacola do localStorage de forma resiliente (dado corrompido não quebra o app). */
 function loadCart() {
@@ -119,6 +130,48 @@ function renderChrome() {
       <a href="${s.facebook}" target="_blank" rel="noopener">Facebook /${s.instagram}</a>
       <a href="${s.mapsUrl}" target="_blank" rel="noopener">Ver no mapa</a>
     </div>`;
+
+  // Autenticação
+  renderAuth();
+}
+
+/* ---------- Autenticação UI ---------- */
+function renderAuth() {
+  const btnLogin = $("btnLogin");
+  const userProfile = $("userProfile");
+  
+  if (state.user) {
+    btnLogin.hidden = true;
+    userProfile.hidden = false;
+    $("userNameLabel").textContent = state.user.nome.split(" ")[0]; // Primeiro nome
+    $("ddUserName").textContent = state.user.nome;
+    $("ddUserEmail").textContent = state.user.email;
+    
+    // Configura avatar com inicial do nome se não houver foto
+    if (!state.user.avatar) {
+      const init = state.user.nome.charAt(0).toUpperCase();
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#2a1d10"/><text x="50" y="66" font-family="Inter, sans-serif" font-size="45" font-weight="600" fill="#fff" text-anchor="middle">${init}</text></svg>`;
+      $("userAvatarImg").src = `data:image/svg+xml;base64,${btoa(svg)}`;
+    }
+  } else {
+    btnLogin.hidden = false;
+    userProfile.hidden = true;
+  }
+}
+
+function toggleUserMenu(e) {
+  if (e) e.stopPropagation();
+  const menu = $("userDropdown");
+  menu.hidden = !menu.hidden;
+}
+
+function handleLogout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  state.user = null;
+  $("userDropdown").hidden = true;
+  renderAuth();
+  flash("Você saiu da conta.");
 }
 
 /* ---------- Carregar / renderizar produtos ---------- */
@@ -437,10 +490,22 @@ function bindEvents() {
   });
   $("btnCheckoutWa").addEventListener("click", checkoutWa);
 
+  // Autenticação / Menu
+  $("userAvatarBtn").addEventListener("click", toggleUserMenu);
+  $("btnLogout").addEventListener("click", handleLogout);
+  
+  document.addEventListener("click", (e) => {
+    // Fecha menu do usuário se clicar fora
+    if (!e.target.closest("#userProfile") && !$("userDropdown").hidden) {
+      $("userDropdown").hidden = true;
+    }
+  });
+
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       closeOverlay("sheetOverlay");
       closeOverlay("cartOverlay");
+      $("userDropdown").hidden = true;
     }
   });
 }
