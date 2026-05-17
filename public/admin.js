@@ -33,6 +33,33 @@ function logout(toLogin) {
   if (toLogin) window.location.replace("/login.html");
 }
 
+/* ---------- Guarda de acesso -----------------------------------------
+   Cliente comum não vê o painel. Este guard é defesa em profundidade: o
+   gate real continua sendo o 403 de /api/analytics (que lê a coluna
+   `admin` no banco). Aqui só evitamos que um não-admin chegue a ver o
+   esqueleto do painel — sem sessão vai pro login; logado mas sem admin
+   volta pra vitrine, como um cliente normal. */
+function getStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    return null;
+  }
+}
+
+function ensureAdmin() {
+  if (!localStorage.getItem("token")) {
+    window.location.replace("/login.html");
+    return false;
+  }
+  const user = getStoredUser();
+  if (!user || user.isAdmin !== true) {
+    window.location.replace("/");
+    return false;
+  }
+  return true;
+}
+
 async function load() {
   setState("loading");
   const token = localStorage.getItem("token");
@@ -341,4 +368,4 @@ $("btnRefresh").addEventListener("click", (e) =>
 );
 $("btnRetry").addEventListener("click", () => load());
 
-load();
+if (ensureAdmin()) load();
