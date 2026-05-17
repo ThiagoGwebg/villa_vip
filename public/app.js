@@ -8,6 +8,8 @@
 const API = {
   store: "/api/store",
   products: (qs) => "/api/products" + (qs ? "?" + qs : ""),
+  orders: "/api/orders",
+  profile: "/api/auth/profile",
 };
 
 const state = {
@@ -364,6 +366,184 @@ function handleLogout() {
   flash("Você saiu da conta.");
 }
 
+/* ---------- Fetch autenticado (Bearer) ---------- */
+function getToken() {
+  return localStorage.getItem("token");
+}
+
+/**
+ * fetch com Authorization. Se a sessão expirou (401), limpa o login e
+ * devolve null — quem chamou decide a mensagem amigável.
+ */
+async function authFetch(url, opts = {}) {
+  const token = getToken();
+  if (!token) return null;
+  const res = await fetch(url, {
+    ...opts,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      ...(opts.headers || {}),
+    },
+  });
+  if (res.status === 401) {
+    handleLogout();
+    flash("Sua sessão expirou. Entre novamente.");
+    return null;
+  }
+  return res;
+}
+
+/* ---------- Persistência do pedido (Meus Pedidos) ---------- */
+/** Grava no Supabase o pedido finalizado pelo WhatsApp (só se logado). */
+async function recordOrder(itens) {
+  if (!state.user || !getToken() || !itens.length) return;
+  try {
+    await authFetch(API.orders, {
+      method: "POST",
+      body: JSON.stringify({ itens }),
+    });
+  } catch (err) {
+    // Não bloqueia a conversão no WhatsApp se o registro falhar.
+    console.error("Falha ao registrar pedido:", err);
+  }
+}
+
+/* ---------- Meus Pedidos ---------- */
+const fmtData = (iso) =>
+  new Date(iso).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const STATUS_LABEL = {
+  enviado: "Enviado ao WhatsApp",
+  em_andamento: "Em andamento",
+  concluido: "Concluído",
+  cancelado: "Cancelado",
+};
+
+async function openOrders() {
+  $("userDropdown").hidden = true;
+  const body = $("ordersBody");
+  body.innerHTML = `<p class="cart-empty">Carregando…</p>`;
+  openOverlay("ordersOverlay");
+
+  const res = await authFetch(API.orders);
+  if (!res) {
+    closeOverlay("ordersOverlay");
+    return;
+  }
+  if (!res.ok) {
+    body.innerHTML = `<p class="cart-empty">Não foi possível carregar seus pedidos.</p>`;
+    return;
+  }
+
+  const { pedidos } = await res.json();
+  if (!pedidos.length) {
+    body.innerHTML = `<p class="cart-empty">Você ainda não fez pedidos.<br>Finalize uma compra pelo WhatsApp e ela aparecerá aqui.</p>`;
+    return;
+  }
+
+  body.innerHTML = pedidos
+    .map((o) => {
+      const itens = (o.itens || [])
+        .map(
+          (i) => `
+        <div class="ord-line">
+          <span class="ord-thumb m-${i.categoria || "todos"}">${catIcon(
+            i.categoria
+          )}</span>
+          <div class="ord-line-info">
+            <b>${escapeHTML(i.nome)}</b>
+            <small>${escapeHTML(i.marca || "")}${
+            i.size ? " · Tam " + escapeHTML(i.size) : ""
+          } · Qtd ${i.qty}</small>
+          </div>
+          <span class="ord-line-price">${brl(i.preco * i.qty)}</span>
+        </div>`
+        )
+        .join("");
+      const st = STATUS_LABEL[o.status] || o.status;
+      return `
+      <article class="order-card">
+        <header class="order-head">
+          <div>
+            <b>${fmtData(o.created_at)}</b>
+            <span class="order-status st-${o.status}">${st}</span>
+          </div>
+          <strong class="order-total">${brl(o.total)}</strong>
+        </header>
+        <div class="order-items">${itens}</div>
+      </article>`;
+    })
+    .join("");
+}
+
+/* ---------- Editar Perfil ---------- */
+function profileMsg(text, kind) {
+  const box = $("profileMsg");
+  box.className = "auth-msg " + (kind || "error");
+  box.textContent = text;
+  box.hidden = false;
+}
+
+function openProfile() {
+  $("userDropdown").hidden = true;
+  if (!state.user) return;
+  $("pfNome").value = state.user.nome || "";
+  $("pfEmail").value = state.user.email || "";
+  $("pfSenha").value = "";
+  $("pfSenha2").value = "";
+  $("profileMsg").hidden = true;
+  openOverlay("profileOverlay");
+}
+
+async function submitProfile(e) {
+  e.preventDefault();
+  const nome = $("pfNome").value.trim();
+  const senha = $("pfSenha").value;
+  const senha2 = $("pfSenha2").value;
+  const btn = $("pfSubmit");
+
+  if (!nome) return profileMsg("O nome não pode ficar vazio.");
+  if (senha || senha2) {
+    if (senha.length < 6)
+      return profileMsg("A nova senha precisa ter ao menos 6 caracteres.");
+    if (senha !== senha2) return profileMsg("As senhas não são iguais.");
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Salvando…";
+  $("profileMsg").hidden = true;
+
+  const res = await authFetch(API.profile, {
+    method: "PUT",
+    body: JSON.stringify({ nome, senha: senha || undefined }),
+  });
+
+  btn.disabled = false;
+  btn.textContent = "Salvar alterações";
+
+  if (!res) {
+    closeOverlay("profileOverlay");
+    return;
+  }
+  const data = await res.json();
+  if (!res.ok) {
+    return profileMsg(data.message || "Não foi possível salvar.");
+  }
+
+  state.user = data.user;
+  localStorage.setItem("user", JSON.stringify(data.user));
+  renderAuth();
+  profileMsg("Perfil atualizado com sucesso!", "success");
+  setTimeout(() => closeOverlay("profileOverlay"), 1200);
+}
+
 /* ---------- Carregar / renderizar produtos ---------- */
 async function loadProducts() {
   const qs = new URLSearchParams();
@@ -482,6 +662,17 @@ function buyNow() {
     pulseSizes();
     return;
   }
+  recordOrder([
+    {
+      id: p.id,
+      nome: p.nome,
+      marca: p.marca,
+      categoria: p.categoria,
+      size: state.size,
+      preco: p.preco,
+      qty: state.qty,
+    },
+  ]);
   window.open(waLink(msgProduto(p, state.size, state.qty)), "_blank");
 }
 
@@ -570,6 +761,7 @@ function checkoutWa() {
     `${linhas}\n\n` +
     `Total estimado: ${brl(total)} (a confirmar)\n` +
     `Fico no aguardo! 🙌`;
+  recordOrder(state.cart.map((i) => ({ ...i })));
   window.open(waLink(msg), "_blank");
 }
 
@@ -683,6 +875,31 @@ function bindEvents() {
   // Autenticação / Menu
   $("userAvatarBtn").addEventListener("click", toggleUserMenu);
   $("btnLogout").addEventListener("click", handleLogout);
+
+  // Meus Pedidos
+  $("btnMyOrders").addEventListener("click", (e) => {
+    e.preventDefault();
+    openOrders();
+  });
+  $("ordersClose").addEventListener("click", () =>
+    closeOverlay("ordersOverlay")
+  );
+  $("ordersOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "ordersOverlay") closeOverlay("ordersOverlay");
+  });
+
+  // Editar Perfil
+  $("btnMyProfile").addEventListener("click", (e) => {
+    e.preventDefault();
+    openProfile();
+  });
+  $("profileClose").addEventListener("click", () =>
+    closeOverlay("profileOverlay")
+  );
+  $("profileOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "profileOverlay") closeOverlay("profileOverlay");
+  });
+  $("profileForm").addEventListener("submit", submitProfile);
   
   document.addEventListener("click", (e) => {
     // Fecha menu do usuário se clicar fora
@@ -695,6 +912,8 @@ function bindEvents() {
     if (e.key === "Escape") {
       closeOverlay("sheetOverlay");
       closeOverlay("cartOverlay");
+      closeOverlay("ordersOverlay");
+      closeOverlay("profileOverlay");
       $("userDropdown").hidden = true;
     }
   });

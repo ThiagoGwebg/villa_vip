@@ -24,6 +24,9 @@ const authMiddleware = async (req, res, next) => {
     }
 
     req.user = data.user;
+    // Token cru: usado para criar um client Supabase com escopo do próprio
+    // usuário (ex.: auth.updateUser no /api/auth/profile).
+    req.token = token;
     next();
   } catch (err) {
     console.error('Auth middleware error:', err);
