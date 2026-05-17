@@ -3,9 +3,9 @@ const supabase = require('../config/supabase');
 /**
  * Verifica no banco se o e-mail pertence a um administrador.
  *
- * Consulta a coluna booleana `admin` da tabela `users`, casando pelo e-mail
- * de forma case-insensitive (`ilike`). Substitui a antiga allowlist do .env
- * (ADMIN_EMAILS) — agora a fonte de verdade é o próprio banco.
+ * Consulta a coluna booleana `admin` da tabela `profiles`, casando pelo e-mail
+ * de forma case-insensitive (`ilike`). A tabela `profiles` deve estar
+ * sincronizada com `auth.users`.
  *
  * Deny-by-default: e-mail vazio, erro de consulta ou usuário inexistente
  * resultam em `false`.
@@ -18,7 +18,7 @@ async function isAdminEmail(email) {
   if (!normalized) return false;
 
   const { data, error } = await supabase
-    .from('users')
+    .from('profiles')
     .select('admin')
     .ilike('email', normalized)
     .maybeSingle();
