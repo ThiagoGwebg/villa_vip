@@ -1,0 +1,173 @@
+/* ============================================================================
+   Villa Vip - Autenticação (Login / Registro)
+   ========================================================================== */
+
+.auth-page {
+  /* Usa o mesmo fundo da Hero para dar imersão e destacar o card branco */
+  background: var(--wood-800);
+  background-image:
+    radial-gradient(110% 130% at 50% -20%, rgba(226, 100, 28, .40), transparent 60%),
+    linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)),
+    url('/assets/villavip_fachada.png');
+  background-size: cover;
+  background-position: center;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card);
+  border-radius: var(--radius);
+  border-top: 4px solid var(--orange);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  padding: 40px 30px;
+  position: relative;
+}
+
+.auth-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.auth-brand svg {
+  width: 56px;
+  color: var(--orange);
+  margin-bottom: 12px;
+}
+
+.auth-title {
+  font-family: "Anton", sans-serif;
+  color: var(--ink);
+  font-size: 32px;
+  text-align: center;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+}
+
+.auth-subtitle {
+  font-family: "Oswald", sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  text-align: center;
+  margin-top: 4px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-group label {
+  font-family: "Oswald", sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--ink);
+  font-size: 15px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.auth-input:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(226, 100, 28, 0.15);
+}
+
+.auth-input::placeholder {
+  color: #b8a98f;
+}
+
+.auth-btn {
+  background: var(--orange);
+  color: #fff;
+  padding: 16px;
+  border-radius: var(--radius);
+  font-family: "Oswald", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.15s, transform 0.15s;
+  margin-top: 8px;
+}
+
+.auth-btn:hover:not(:disabled) {
+  background: var(--orange-deep);
+  transform: translateY(-2px);
+}
+
+.auth-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.auth-link {
+  text-align: center;
+  font-size: 14px;
+  margin-top: 24px;
+  color: var(--ink-soft);
+}
+
+.auth-link a {
+  color: var(--orange);
+  font-weight: 600;
+  text-decoration: underline;
+  transition: color 0.15s;
+}
+
+.auth-link a:hover {
+  color: var(--orange-deep);
+}
+
+/* Alertas de erro/sucesso melhorados */
+.auth-msg {
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fade .2s;
+}
+
+.auth-msg.error {
+  background: #fdeaea;
+  color: #c62828;
+  border-left: 4px solid #c62828;
+}
+
+.auth-msg.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-left: 4px solid #2e7d32;
+}

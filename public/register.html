@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastrar | Villa Vip Country Store</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="auth.css">
+</head>
+
+<body class="auth-page">
+
+  <main class="auth-container">
+    <div class="auth-brand">
+      <svg viewBox="0 0 240 200">
+        <path fill="currentColor"
+          d="M120 80C104 82 80 80 58 72C38 64 22 50 14 36C26 46 48 52 70 52C92 52 110 60 120 78C130 60 148 52 170 52C192 52 214 46 226 36C218 50 202 64 182 72C160 80 136 82 120 80Z" />
+        <path fill="currentColor" d="M78 84 L120 170 L162 84 L139 84 L120 126 L101 84 Z" />
+      </svg>
+      <h1 class="auth-title">CRIAR CONTA</h1>
+      <span class="auth-subtitle">Junte-se à Villa Vip</span>
+    </div>
+
+    <div id="authMessage" class="auth-msg" hidden></div>
+
+    <form id="registerForm" class="auth-form">
+      <div class="input-group">
+        <label for="nome">Nome Completo</label>
+        <input type="text" id="nome" placeholder="João da Silva" class="auth-input" required>
+      </div>
+
+      <div class="input-group">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" placeholder="seu@email.com" class="auth-input" required>
+      </div>
+
+      <div class="input-group">
+        <label for="senha">Senha</label>
+        <input type="password" id="senha" placeholder="••••••••" class="auth-input" required minlength="6">
+      </div>
+
+      <button type="submit" class="auth-btn">Cadastrar</button>
+    </form>
+
+    <p class="auth-link">Já possui uma conta? <a href="login.html">Faça login</a></p>
+  </main>
+
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      // Lógica de fetch de registro similar à de login.
+    });
+  </script>
+</body>
+
+</html>

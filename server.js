@@ -1,3 +1,4 @@
+
 /**
  * Catálogo Web Dinâmico — Villa Vip Country Store
  * Backend full-stack em Node.js (Express). Sync Services.
@@ -10,9 +11,11 @@
  * mas o número e o template ficam centralizados aqui via /api/store.
  */
 
+require('dotenv').config();
 const express = require("express");
 const path = require("path");
 const fs = require("fs");
+const authRoutes = require("./routes/auth");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -40,6 +43,7 @@ function normalize(str) {
 }
 
 app.use(express.json());
+app.use('/api/auth', authRoutes);
 
 // Compressão leve via headers + cache de assets estáticos (catálogo "leve e rápido")
 app.use(

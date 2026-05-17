@@ -15,5 +15,11 @@
     "express": "^4.19.2"
   },
   "author": "Sync Services",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.105.4",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.2",
+    "jsonwebtoken": "^9.0.3"
+  }
 }
