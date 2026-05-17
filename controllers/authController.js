@@ -1,5 +1,10 @@
 const supabase = require('../config/supabase');
 
+const adminEmails = (process.env.ADMIN_EMAILS || "")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
+
 const register = async (req, res) => {
   const { nome, email, senha } = req.body;
 
@@ -46,6 +51,7 @@ const login = async (req, res) => {
     }
 
     const { session, user } = data;
+    const isAdmin = adminEmails.includes(user.email.toLowerCase());
 
     // Retorna o formato exato que o frontend já espera
     res.json({ 
@@ -53,7 +59,8 @@ const login = async (req, res) => {
       user: { 
         id: user.id, 
         nome: user.user_metadata?.nome || user.email.split('@')[0], 
-        email: user.email 
+        email: user.email,
+        isAdmin: isAdmin
       } 
     });
   } catch (error) {

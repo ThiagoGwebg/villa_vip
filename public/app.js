@@ -268,6 +268,11 @@ function renderAuth() {
     $("ddUserName").textContent = state.user.nome;
     $("ddUserEmail").textContent = state.user.email;
     
+    const btnAdminPanel = $("btnAdminPanel");
+    if (btnAdminPanel) {
+      btnAdminPanel.hidden = !state.user.isAdmin;
+    }
+    
     // Configura avatar com inicial do nome se não houver foto
     if (!state.user.avatar) {
       const init = state.user.nome.charAt(0).toUpperCase();
