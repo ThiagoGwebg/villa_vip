@@ -237,12 +237,16 @@ select {
 .hero {
   background: var(--wood-800);
   background-image:
-    radial-gradient(110% 130% at 50% -20%, rgba(226, 100, 28, .30), transparent 60%),
-    var(--wood-grain);
+    radial-gradient(110% 130% at 50% -20%, rgba(226, 100, 28, .40), transparent 60%),
+    linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)),
+    url('/assets/villavip_fachada.png');
+  background-size: cover;
+  background-position: center;
   color: #fff;
   text-align: center;
   padding: 36px 0 40px;
   border-bottom: 3px solid var(--orange);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
 }
 
 .hero-eyebrow {
