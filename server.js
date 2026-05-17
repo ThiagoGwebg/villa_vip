@@ -21,6 +21,7 @@ const adminMiddleware = require("./middlewares/adminMiddleware");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || "0.0.0.0";
 
 const DATA_DIR = path.join(__dirname, "data");
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -314,9 +315,9 @@ app.get("*", (_req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, "index.html"));
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, HOST, () => {
   console.log(
     `\n  🤠  Catálogo Villa Vip rodando em  http://localhost:${PORT}\n` +
-      `      (desenvolvido pela Sync Services)\n`
+    `      (desenvolvido pela Sync Services)\n`
   );
 });
