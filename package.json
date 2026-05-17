@@ -1,0 +1,19 @@
+{
+  "name": "catalogo-villa-vip",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Catálogo Web Dinâmico da Villa Vip Country Store — vitrine mobile-first com gancho de conversão via WhatsApp. Desenvolvido pela Sync Services.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "author": "Sync Services",
+  "license": "UNLICENSED"
+}

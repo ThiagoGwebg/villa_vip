@@ -1,0 +1,32 @@
+{
+  "nome": "Villa Vip Country Store",
+  "slogan": "Moda e estilo country de verdade",
+  "whatsapp": "5519995497415",
+  "whatsappDisplay": "(19) 99549-7415",
+  "telefoneFixo": "(19) 3549-7980",
+  "instagram": "lojavillavip",
+  "instagramUrl": "https://instagram.com/lojavillavip",
+  "facebook": "https://facebook.com/lojavillavip",
+  "endereco": "R. Santa Cruz, 810 — Jardim Santa Cruz, Mogi Mirim/SP",
+  "cep": "13800-440",
+  "mapsUrl": "https://www.google.com/maps/search/?api=1&query=-22.4358495,-46.9734401",
+  "horario": "Seg a Sex: 08:00 às 18:00 · Sáb: 08:00 às 15:00",
+  "categorias": [
+    { "id": "todos", "nome": "Todos", "icone": "grid" },
+    { "id": "botas", "nome": "Botas Texanas", "icone": "boot" },
+    { "id": "chapeus", "nome": "Chapéus", "icone": "hat" },
+    { "id": "camisas", "nome": "Camisas & T-Shirts", "icone": "shirt" },
+    { "id": "jeans-fem", "nome": "Jeans Feminino", "icone": "jeans" },
+    { "id": "masculino", "nome": "Linha Masculina", "icone": "man" },
+    { "id": "acessorios", "nome": "Acessórios", "icone": "belt" }
+  ],
+  "marcas": [
+    "Eldorado",
+    "Helazza",
+    "Tomahawk",
+    "Western Blue",
+    "TX Farm",
+    "Austin Western"
+  ],
+  "creditoRodape": "Catálogo digital desenvolvido pela Sync Services"
+}

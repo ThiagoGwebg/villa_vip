@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" role="img" aria-label="Villa Vip Country Store">
+  <g fill="currentColor">
+    <!-- Longhorn (chifres com entalhe central em V) -->
+    <path d="M120 80
+             C104 82 80 80 58 72
+             C38 64 22 50 14 36
+             C26 46 48 52 70 52
+             C92 52 110 60 120 78
+             C130 60 148 52 170 52
+             C192 52 214 46 226 36
+             C218 50 202 64 182 72
+             C160 80 136 82 120 80 Z"/>
+    <!-- Cabeça do touro em "V" -->
+    <path d="M78 84 L120 170 L162 84 L139 84 L120 126 L101 84 Z"/>
+  </g>
+</svg>

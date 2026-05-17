@@ -1,0 +1,452 @@
+/* ============================================================================
+   Villa Vip Country Store — Catálogo Digital (front-end)
+   Vitrine leve em JS puro. O "gancho de conversão" monta o link dinâmico
+   do WhatsApp com a mensagem pronta a partir do produto + tamanho escolhidos.
+   Sync Services.
+   ========================================================================== */
+
+const API = {
+  store: "/api/store",
+  products: (qs) => "/api/products" + (qs ? "?" + qs : ""),
+};
+
+const state = {
+  categoria: "todos",
+  marcas: new Set(),
+  q: "",
+  ordenar: "destaque",
+  store: null,
+  current: null, // produto aberto no modal
+  size: null,
+  qty: 1,
+  cart: loadCart(),
+};
+
+/** Lê a sacola do localStorage de forma resiliente (dado corrompido não quebra o app). */
+function loadCart() {
+  try {
+    const raw = localStorage.getItem("vv_cart");
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    localStorage.removeItem("vv_cart");
+    return [];
+  }
+}
+
+const brl = (n) =>
+  n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const $ = (id) => document.getElementById(id);
+
+/* ---------- Ícones SVG por categoria (placeholder premium) ---------- */
+const ICONS = {
+  grid: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
+  boot: '<svg viewBox="0 0 24 24"><path d="M8 3h3v9c0 1 .4 2 1.4 2.8L17 18c1.4 1 2 2 2 3.5H7c-1.7 0-3-1.3-3-3V3h4Z"/><path d="M8 12h3"/><path d="M4 18h3"/></svg>',
+  hat: '<svg viewBox="0 0 24 24"><path d="M7 14c-3 .6-5 1.6-5 2.8C2 18.6 6.5 20 12 20s10-1.4 10-3.2c0-1.2-2-2.2-5-2.8"/><path d="M8 14 9.5 5.5C9.8 4 10.7 3 12 3s2.2 1 2.5 2.5L16 14"/></svg>',
+  shirt: '<svg viewBox="0 0 24 24"><path d="M9 3 6 5 3 8l2.5 2.5L7 9v12h10V9l1.5 1.5L21 8l-3-3-3-2c0 1.7-1.3 3-3 3S9 4.7 9 3Z"/></svg>',
+  jeans: '<svg viewBox="0 0 24 24"><path d="M6 3h12l-.5 5L17 21h-4l-1-11-1 11H7L6.5 8 6 3Z"/><path d="M6 6h12"/></svg>',
+  man: '<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><path d="M7 21v-7l-2-2 2-4h10l2 4-2 2v7"/><path d="M12 9v12"/></svg>',
+  belt: '<svg viewBox="0 0 24 24"><path d="M3 9h18v6H3z"/><rect x="9.5" y="7" width="5" height="10" rx="1"/><path d="M14.5 12H20"/></svg>',
+};
+const BULL =
+  '<svg viewBox="0 0 240 200"><path d="M120 80C104 82 80 80 58 72C38 64 22 50 14 36C26 46 48 52 70 52C92 52 110 60 120 78C130 60 148 52 170 52C192 52 214 46 226 36C218 50 202 64 182 72C160 80 136 82 120 80Z"/><path d="M78 84 L120 170 L162 84 L139 84 L120 126 L101 84 Z"/></svg>';
+
+const catIcon = (cat) => ICONS[catIconKey(cat)] || ICONS.grid;
+function catIconKey(cat) {
+  return { camisas: "shirt", "jeans-fem": "jeans", masculino: "man", acessorios: "belt", botas: "boot", chapeus: "hat" }[cat] || "grid";
+}
+
+/* ---------- Mídia (placeholder ilustrado por categoria) ---------- */
+function mediaHTML(p, tagInside) {
+  return `
+    <div class="card-media m-${p.categoria}">
+      ${tagInside && p.tag ? `<span class="tag ${p.tag === "Novo" ? "novo" : ""}">${p.tag}</span>` : ""}
+      <span class="wm" aria-hidden="true">${BULL}</span>
+      <span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>
+      <span class="m-brand">${p.marca}</span>
+    </div>`;
+}
+
+/* ---------- Boot ---------- */
+async function init() {
+  state.store = await fetch(API.store).then((r) => r.json());
+  renderChrome();
+  bindEvents();
+  await loadProducts();
+  updateCartBadge();
+}
+
+function renderChrome() {
+  const s = state.store;
+
+  // Categorias
+  $("categories").innerHTML = s.categorias
+    .map(
+      (c) =>
+        `<button class="cat-pill ${c.id === "todos" ? "active" : ""}" data-cat="${c.id}">
+           ${ICONS[c.icone] || ICONS.grid}<span>${c.nome}</span>
+         </button>`
+    )
+    .join("");
+
+  // Marcas
+  $("brandChips").innerHTML = s.marcas
+    .map((m) => `<button class="brand-chip" data-marca="${m}">${m}</button>`)
+    .join("");
+
+  // WhatsApp flutuante
+  const oi = encodeURIComponent(
+    `Olá, ${s.nome}! 🤠 Vi o catálogo digital e gostaria de mais informações.`
+  );
+  $("waFloat").href = `https://wa.me/${s.whatsapp}?text=${oi}`;
+
+  // Footer
+  $("footAddr").textContent = `${s.endereco} · CEP ${s.cep}`;
+  $("footCredit").innerHTML = `${s.creditoRodape.replace(
+    "Sync Services",
+    "<b>Sync Services</b>"
+  )} · © ${new Date().getFullYear()}`;
+  $("footerInfo").innerHTML = `
+    <div class="foot-col">
+      <h4>Atendimento</h4>
+      <a href="https://wa.me/${s.whatsapp}" target="_blank" rel="noopener">WhatsApp ${s.whatsappDisplay}</a>
+      <p>Fixo ${s.telefoneFixo}</p>
+      <p>${s.horario}</p>
+    </div>
+    <div class="foot-col">
+      <h4>Encontre-nos</h4>
+      <a href="${s.instagramUrl}" target="_blank" rel="noopener">Instagram @${s.instagram}</a>
+      <a href="${s.facebook}" target="_blank" rel="noopener">Facebook /${s.instagram}</a>
+      <a href="${s.mapsUrl}" target="_blank" rel="noopener">Ver no mapa</a>
+    </div>`;
+}
+
+/* ---------- Carregar / renderizar produtos ---------- */
+async function loadProducts() {
+  const qs = new URLSearchParams();
+  if (state.categoria !== "todos") qs.set("categoria", state.categoria);
+  if (state.marcas.size) qs.set("marca", [...state.marcas].join(","));
+  if (state.q) qs.set("q", state.q);
+  qs.set("ordenar", state.ordenar);
+
+  const { total, produtos } = await fetch(API.products(qs.toString())).then(
+    (r) => r.json()
+  );
+
+  const grid = $("grid");
+  $("resultsCount").textContent =
+    total === 0 ? "Nenhum produto" : `${total} produto${total > 1 ? "s" : ""}`;
+  const filtering =
+    state.categoria !== "todos" || state.marcas.size || state.q;
+  $("clearFilters").hidden = !filtering;
+
+  if (total === 0) {
+    grid.innerHTML = "";
+    $("emptyState").hidden = false;
+    return;
+  }
+  $("emptyState").hidden = true;
+
+  grid.innerHTML = produtos
+    .map(
+      (p) => `
+      <article class="card" data-id="${p.id}">
+        ${mediaHTML(p, true)}
+        <div class="card-body">
+          <span class="c-brand">${p.marca}</span>
+          <h3 class="c-name">${p.nome}</h3>
+          <div class="c-price">
+            <span class="now">${brl(p.preco)}</span>
+            ${p.precoDe ? `<span class="old">${brl(p.precoDe)}</span>` : ""}
+          </div>
+          <button class="c-cta">Ver e pedir</button>
+        </div>
+      </article>`
+    )
+    .join("");
+
+  grid.querySelectorAll(".card").forEach((el) =>
+    el.addEventListener("click", () => openSheet(el.dataset.id, produtos))
+  );
+}
+
+/* ---------- Modal de produto ---------- */
+function openSheet(id, produtos) {
+  const p = produtos.find((x) => x.id === id);
+  if (!p) return;
+  state.current = p;
+  state.size = null;
+  state.qty = 1;
+
+  $("sheetMedia").className = "sheet-media m-" + p.categoria;
+  $("sheetMedia").innerHTML = `
+    <span class="wm" aria-hidden="true">${BULL}</span>
+    <span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>
+    <span class="m-brand">${p.marca}</span>`;
+  $("sheetBrand").textContent = p.marca;
+  $("sheetName").textContent = p.nome;
+  $("sheetDesc").textContent = p.descricao;
+  $("sheetPrice").innerHTML = `
+    <span class="now">${brl(p.preco)}</span>
+    ${
+      p.precoDe
+        ? `<span class="old">${brl(p.precoDe)}</span>
+           <span class="off">-${Math.round((1 - p.preco / p.precoDe) * 100)}%</span>`
+        : ""
+    }`;
+  $("sizeReq").textContent = "— selecione";
+  $("sizeReq").classList.remove("ok");
+  $("sizeGrid").innerHTML = p.tamanhos
+    .map((t) => `<button class="size-btn" data-size="${t}">${t}</button>`)
+    .join("");
+  $("sizeGrid")
+    .querySelectorAll(".size-btn")
+    .forEach((b) =>
+      b.addEventListener("click", () => {
+        state.size = b.dataset.size;
+        $("sizeGrid")
+          .querySelectorAll(".size-btn")
+          .forEach((x) => x.classList.toggle("active", x === b));
+        $("sizeReq").textContent = "✓ tamanho " + b.dataset.size;
+        $("sizeReq").classList.add("ok");
+      })
+    );
+  $("qtyValue").textContent = "1";
+  openOverlay("sheetOverlay");
+}
+
+/* ---------- Geração do link dinâmico do WhatsApp ---------- */
+function waLink(text) {
+  return `https://wa.me/${state.store.whatsapp}?text=${encodeURIComponent(text)}`;
+}
+
+function msgProduto(p, size, qty) {
+  return (
+    `Olá, ${state.store.nome}! 🤠 Vi no catálogo digital e quero este produto:\n\n` +
+    `• *${p.nome}*\n` +
+    `• Marca: ${p.marca}\n` +
+    `• Tamanho: ${size}\n` +
+    `• Qtd: ${qty}\n` +
+    `• Valor: ${brl(p.preco)}\n` +
+    `• Ref: #${p.id}\n\n` +
+    `Está disponível? Como faço pra garantir o meu? 👢`
+  );
+}
+
+function buyNow() {
+  const p = state.current;
+  if (!state.size) {
+    flash("Escolha um tamanho primeiro 👆");
+    pulseSizes();
+    return;
+  }
+  window.open(waLink(msgProduto(p, state.size, state.qty)), "_blank");
+}
+
+/* ---------- Sacola ---------- */
+function saveCart() {
+  localStorage.setItem("vv_cart", JSON.stringify(state.cart));
+  updateCartBadge();
+}
+function updateCartBadge() {
+  const n = state.cart.reduce((s, i) => s + i.qty, 0);
+  const badge = $("cartCount");
+  badge.textContent = n;
+  badge.hidden = n === 0;
+}
+function addToCart() {
+  const p = state.current;
+  if (!state.size) {
+    flash("Escolha um tamanho primeiro 👆");
+    pulseSizes();
+    return;
+  }
+  const key = p.id + "|" + state.size;
+  const found = state.cart.find((i) => i.key === key);
+  if (found) found.qty += state.qty;
+  else
+    state.cart.push({
+      key,
+      id: p.id,
+      nome: p.nome,
+      marca: p.marca,
+      categoria: p.categoria,
+      size: state.size,
+      preco: p.preco,
+      qty: state.qty,
+    });
+  saveCart();
+  closeOverlay("sheetOverlay");
+  flash("Adicionado à sacola 🛍️");
+}
+function renderCart() {
+  const box = $("cartItems");
+  if (!state.cart.length) {
+    box.innerHTML = `<p class="cart-empty">Sua sacola está vazia.<br>Explore o catálogo e adicione seus itens.</p>`;
+    $("cartTotal").textContent = brl(0);
+    return;
+  }
+  box.innerHTML = state.cart
+    .map(
+      (i, idx) => `
+      <div class="ci">
+        <div class="ci-thumb m-${i.categoria}">${catIcon(i.categoria)}</div>
+        <div class="ci-info">
+          <b>${i.nome}</b>
+          <small>${i.marca} · Tam ${i.size} · Qtd ${i.qty}</small>
+          <span class="ci-price">${brl(i.preco * i.qty)}</span>
+        </div>
+        <button class="ci-remove" data-rm="${idx}">remover</button>
+      </div>`
+    )
+    .join("");
+  box.querySelectorAll("[data-rm]").forEach((b) =>
+    b.addEventListener("click", () => {
+      state.cart.splice(+b.dataset.rm, 1);
+      saveCart();
+      renderCart();
+    })
+  );
+  $("cartTotal").textContent = brl(
+    state.cart.reduce((s, i) => s + i.preco * i.qty, 0)
+  );
+}
+function checkoutWa() {
+  if (!state.cart.length) {
+    flash("Sua sacola está vazia");
+    return;
+  }
+  const linhas = state.cart
+    .map(
+      (i, n) =>
+        `${n + 1}. *${i.nome}* — ${i.marca} | Tam ${i.size} | Qtd ${i.qty} | #${i.id}`
+    )
+    .join("\n");
+  const total = state.cart.reduce((s, i) => s + i.preco * i.qty, 0);
+  const msg =
+    `Olá, ${state.store.nome}! 🤠 Montei meu pedido pelo catálogo digital:\n\n` +
+    `${linhas}\n\n` +
+    `Total estimado: ${brl(total)} (a confirmar)\n` +
+    `Fico no aguardo! 🙌`;
+  window.open(waLink(msg), "_blank");
+}
+
+/* ---------- UI helpers ---------- */
+function openOverlay(id) {
+  $(id).hidden = false;
+  document.body.style.overflow = "hidden";
+}
+function closeOverlay(id) {
+  $(id).hidden = true;
+  document.body.style.overflow = "";
+}
+let toastT;
+function flash(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.hidden = false;
+  clearTimeout(toastT);
+  toastT = setTimeout(() => (t.hidden = true), 2600);
+}
+function pulseSizes() {
+  const g = $("sizeGrid");
+  g.style.transition = "transform .1s";
+  g.style.transform = "scale(1.03)";
+  setTimeout(() => (g.style.transform = ""), 160);
+}
+let searchT;
+
+/* ---------- Eventos ---------- */
+function bindEvents() {
+  $("categories").addEventListener("click", (e) => {
+    const b = e.target.closest(".cat-pill");
+    if (!b) return;
+    state.categoria = b.dataset.cat;
+    $("categories")
+      .querySelectorAll(".cat-pill")
+      .forEach((x) => x.classList.toggle("active", x === b));
+    loadProducts();
+  });
+
+  $("brandChips").addEventListener("click", (e) => {
+    const b = e.target.closest(".brand-chip");
+    if (!b) return;
+    const m = b.dataset.marca;
+    state.marcas.has(m) ? state.marcas.delete(m) : state.marcas.add(m);
+    b.classList.toggle("active");
+    loadProducts();
+  });
+
+  $("sortSelect").addEventListener("change", (e) => {
+    state.ordenar = e.target.value;
+    loadProducts();
+  });
+
+  $("searchToggle").addEventListener("click", () => {
+    const bar = $("searchbar");
+    bar.hidden = !bar.hidden;
+    if (!bar.hidden) $("searchInput").focus();
+  });
+  $("searchInput").addEventListener("input", (e) => {
+    clearTimeout(searchT);
+    state.q = e.target.value.trim();
+    searchT = setTimeout(loadProducts, 280);
+  });
+
+  const reset = () => {
+    state.categoria = "todos";
+    state.marcas.clear();
+    state.q = "";
+    state.ordenar = "destaque";
+    $("searchInput").value = "";
+    $("sortSelect").value = "destaque";
+    $("categories")
+      .querySelectorAll(".cat-pill")
+      .forEach((x) => x.classList.toggle("active", x.dataset.cat === "todos"));
+    $("brandChips")
+      .querySelectorAll(".brand-chip")
+      .forEach((x) => x.classList.remove("active"));
+    loadProducts();
+  };
+  $("clearFilters").addEventListener("click", reset);
+  $("emptyReset").addEventListener("click", reset);
+
+  // Modal
+  $("sheetClose").addEventListener("click", () => closeOverlay("sheetOverlay"));
+  $("sheetOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "sheetOverlay") closeOverlay("sheetOverlay");
+  });
+  $("qtyMinus").addEventListener("click", () => {
+    state.qty = Math.max(1, state.qty - 1);
+    $("qtyValue").textContent = state.qty;
+  });
+  $("qtyPlus").addEventListener("click", () => {
+    state.qty = Math.min(99, state.qty + 1);
+    $("qtyValue").textContent = state.qty;
+  });
+  $("btnBuyWa").addEventListener("click", buyNow);
+  $("btnAddCart").addEventListener("click", addToCart);
+
+  // Sacola
+  $("cartToggle").addEventListener("click", () => {
+    renderCart();
+    openOverlay("cartOverlay");
+  });
+  $("cartClose").addEventListener("click", () => closeOverlay("cartOverlay"));
+  $("cartOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "cartOverlay") closeOverlay("cartOverlay");
+  });
+  $("btnCheckoutWa").addEventListener("click", checkoutWa);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeOverlay("sheetOverlay");
+      closeOverlay("cartOverlay");
+    }
+  });
+}
+
+init().catch((err) => {
+  console.error(err);
+  $("resultsCount").textContent = "Erro ao carregar o catálogo.";
+});
