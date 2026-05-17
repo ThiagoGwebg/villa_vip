@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Login | Villa Vip</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+  <div class="wrap">
+    <div class="auth-container">
+      <h1 class="auth-title">Entrar</h1>
+      <form id="loginForm" class="auth-form">
+        <input type="email" id="email" placeholder="E-mail" class="auth-input" required>
+        <input type="password" id="senha" placeholder="Senha" class="auth-input" required>
+        <button type="submit" class="auth-btn">Entrar</button>
+      </form>
+      <p class="auth-link">Não tem conta? <a href="register.html">Cadastre-se</a></p>
+    </div>
+  </div>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const senha = document.getElementById('senha').value;
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('token', data.token);
+        window.location.href = '/';
+      } else {
+        alert('Erro ao realizar login');
+      }
+    });
+  </script>
+</body>
+</html>

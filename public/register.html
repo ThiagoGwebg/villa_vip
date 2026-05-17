@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastro | Villa Vip</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+  <div class="wrap">
+    <div class="auth-container">
+      <h1 class="auth-title">Criar Conta</h1>
+      <form id="registerForm" class="auth-form">
+        <input type="text" id="nome" placeholder="Nome" class="auth-input" required>
+        <input type="email" id="email" placeholder="E-mail" class="auth-input" required>
+        <input type="password" id="senha" placeholder="Senha" class="auth-input" required>
+        <button type="submit" class="auth-btn">Cadastrar</button>
+      </form>
+      <p class="auth-link">Já tem conta? <a href="login.html">Entrar</a></p>
+    </div>
+  </div>
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nome = document.getElementById('nome').value;
+      const email = document.getElementById('email').value;
+      const senha = document.getElementById('senha').value;
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, email, senha })
+      });
+      if (res.ok) {
+        alert('Conta criada! Agora faça login.');
+        window.location.href = 'login.html';
+      } else {
+        alert('Erro ao realizar cadastro');
+      }
+    });
+  </script>
+</body>
+</html>
