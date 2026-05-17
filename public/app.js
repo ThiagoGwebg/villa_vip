@@ -188,11 +188,10 @@ function openSheet(id, produtos) {
   $("sheetDesc").textContent = p.descricao;
   $("sheetPrice").innerHTML = `
     <span class="now">${brl(p.preco)}</span>
-    ${
-      p.precoDe
-        ? `<span class="old">${brl(p.precoDe)}</span>
+    ${p.precoDe
+      ? `<span class="old">${brl(p.precoDe)}</span>
            <span class="off">-${Math.round((1 - p.preco / p.precoDe) * 100)}%</span>`
-        : ""
+      : ""
     }`;
   $("sizeReq").textContent = "— selecione";
   $("sizeReq").classList.remove("ok");
