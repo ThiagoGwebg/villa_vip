@@ -10,6 +10,7 @@
   <div class="wrap">
     <div class="auth-container">
       <h1 class="auth-title">Entrar</h1>
+      <div id="authMessage" hidden></div>
       <form id="loginForm" class="auth-form">
         <input type="email" id="email" placeholder="E-mail" class="auth-input" required>
         <input type="password" id="senha" placeholder="Senha" class="auth-input" required>
@@ -23,18 +24,37 @@
       e.preventDefault();
       const email = document.getElementById('email').value;
       const senha = document.getElementById('senha').value;
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha })
-      });
-      if (res.ok) {
+      const btn = e.target.querySelector('button');
+      const msgBox = document.getElementById('authMessage');
+      
+      btn.disabled = true;
+      btn.textContent = "Entrando...";
+      msgBox.hidden = true;
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, senha })
+        });
+        
         const data = await res.json();
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user)); // <-- Correção: Salvando o usuário!
-        window.location.href = '/';
-      } else {
-        alert('Erro ao realizar login');
+        
+        if (res.ok) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          window.location.href = '/';
+        } else {
+          msgBox.className = "auth-error";
+          msgBox.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> ${data.message || 'Erro ao realizar login'}`;
+          msgBox.hidden = false;
+        }
+      } catch (err) {
+        msgBox.className = "auth-error";
+        msgBox.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> Erro de conexão com o servidor.`;
+        msgBox.hidden = false;
+        btn.disabled = false;
+        btn.textContent = "Entrar";
       }
     });
   </script>

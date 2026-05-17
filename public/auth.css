@@ -50,3 +50,33 @@
   margin-top: 10px;
   color: var(--ink-soft);
 }
+
+.auth-error {
+  background: #fdeaea;
+  color: #c62828;
+  padding: 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 15px;
+  border-left: 4px solid #c62828;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: fade .2s;
+}
+
+.auth-success {
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 15px;
+  border-left: 4px solid #2e7d32;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: fade .2s;
+}
