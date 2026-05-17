@@ -61,6 +61,21 @@ const ICONS = {
 };
 const BULL =
   '<svg viewBox="0 0 240 200"><path d="M120 80C104 82 80 80 58 72C38 64 22 50 14 36C26 46 48 52 70 52C92 52 110 60 120 78C130 60 148 52 170 52C192 52 214 46 226 36C218 50 202 64 182 72C160 80 136 82 120 80Z"/><path d="M78 84 L120 170 L162 84 L139 84 L120 126 L101 84 Z"/></svg>';
+const IG_ICON =
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1.3"/></svg>';
+
+/** Renderiza N estrelas cheias + vazias a partir da nota (0–5). */
+function stars(n) {
+  const full = Math.round(Number(n) || 0);
+  return (
+    '<span class="on">' + "★".repeat(Math.min(5, full)) + "</span>" +
+    '<span class="off">' + "★".repeat(Math.max(0, 5 - full)) + "</span>"
+  );
+}
+const escapeHTML = (s) =>
+  String(s ?? "").replace(/[&<>"]/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])
+  );
 
 const catIcon = (cat) => ICONS[catIconKey(cat)] || ICONS.grid;
 function catIconKey(cat) {
@@ -131,8 +146,114 @@ function renderChrome() {
       <a href="${s.mapsUrl}" target="_blank" rel="noopener">Ver no mapa</a>
     </div>`;
 
+  // Prova social: avaliações do Google + clientes + Instagram
+  renderSocialProof();
+
   // Autenticação
   renderAuth();
+}
+
+/* ---------- Prova social: avaliações Google + Instagram ---------- */
+function renderSocialProof() {
+  const box = $("socialProof");
+  const sp = state.store.social;
+  if (!box || !sp) {
+    if (box) box.hidden = true;
+    return;
+  }
+
+  const g = sp.google || {};
+  const ig = sp.instagram || {};
+  const cli = sp.clientes || {};
+  const nota = g.nota ? Number(g.nota).toFixed(1).replace(".", ",") : null;
+  const reviews = Array.isArray(g.avaliacoes) ? g.avaliacoes : [];
+  const posts = Array.isArray(ig.posts) ? ig.posts : [];
+
+  // Faixa de números (prova social rápida)
+  const statsHTML = `
+    <div class="stats-band">
+      ${nota
+        ? `<a class="stat" href="${g.url || "#"}" target="_blank" rel="noopener">
+             <b>${nota}<i>★</i></b><span>nota no Google</span>
+           </a>`
+        : ""}
+      ${cli.numero
+        ? `<div class="stat">
+             <b>${escapeHTML(cli.numero)}</b><span>${escapeHTML(cli.rotulo || "clientes")}</span>
+           </div>`
+        : ""}
+      ${ig.handle
+        ? `<a class="stat" href="${ig.url || "#"}" target="_blank" rel="noopener">
+             <b>@${escapeHTML(ig.handle)}</b><span>no Instagram</span>
+           </a>`
+        : ""}
+    </div>`;
+
+  // Avaliações reais do Google
+  const reviewsHTML = reviews.length
+    ? `
+    <div class="reviews">
+      <div class="sec-head">
+        <h2>O que dizem nossos clientes</h2>
+        <a class="rev-google" href="${g.url || "#"}" target="_blank" rel="noopener">
+          ${nota ? `<strong>${nota}</strong>` : ""}
+          <span class="rev-google-stars">${stars(g.nota || 5)}</span>
+          ${g.total ? `<em>${g.total} avaliações</em>` : ""}
+          <span class="rev-google-cta">Ver no Google →</span>
+        </a>
+      </div>
+      <div class="rev-grid">
+        ${reviews
+          .map(
+            (r) => `
+          <article class="rev-card">
+            <div class="rev-top">
+              <span class="rev-avatar">${escapeHTML((r.autor || "?").charAt(0).toUpperCase())}</span>
+              <div class="rev-id">
+                <b>${escapeHTML(r.autor || "Cliente")}</b>
+                <small>${escapeHTML(r.quando || "")}</small>
+              </div>
+              <span class="rev-g" aria-label="via Google">G</span>
+            </div>
+            <div class="rev-stars">${stars(r.nota || 5)}</div>
+            <p class="rev-text">${escapeHTML(r.texto || "")}</p>
+          </article>`
+          )
+          .join("")}
+      </div>
+    </div>`
+    : "";
+
+  // Instagram — siga + grade de posts
+  const instaHTML = ig.handle
+    ? `
+    <div class="insta">
+      <div class="sec-head">
+        <h2>${IG_ICON} @${escapeHTML(ig.handle)} no Instagram</h2>
+        <a class="btn-insta" href="${ig.url || "#"}" target="_blank" rel="noopener">Seguir</a>
+      </div>
+      ${ig.chamada ? `<p class="insta-sub">${escapeHTML(ig.chamada)}</p>` : ""}
+      <div class="insta-grid">
+        ${posts
+          .map(
+            (p) => `
+          <a class="insta-tile" href="${p.url || ig.url}" target="_blank" rel="noopener"
+             aria-label="${escapeHTML(p.legenda || "Post no Instagram")}">
+            <span class="insta-bg" aria-hidden="true">${BULL}</span>
+            ${p.img
+              ? `<img src="${p.img}" alt="${escapeHTML(p.legenda || "")}" loading="lazy"
+                   onerror="this.style.display='none';this.closest('.insta-tile').classList.add('no-img')" />`
+              : ""}
+            <span class="insta-ov" aria-hidden="true">${IG_ICON}</span>
+          </a>`
+          )
+          .join("")}
+      </div>
+    </div>`
+    : "";
+
+  box.hidden = false;
+  box.innerHTML = `<div class="wrap">${statsHTML}${reviewsHTML}${instaHTML}</div>`;
 }
 
 /* ---------- Autenticação UI ---------- */

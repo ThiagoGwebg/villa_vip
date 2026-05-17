@@ -16,6 +16,7 @@ const express = require("express");
 const path = require("path");
 const fs = require("fs");
 const authRoutes = require("./routes/auth");
+const authMiddleware = require("./middlewares/authMiddleware");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -125,7 +126,186 @@ app.get("/api/products/:id", (req, res) => {
   res.json(produto);
 });
 
+/**
+ * Business Intelligence do catálogo.
+ *
+ * 100% derivado de products.json + store.json — nada simulado. Toda a
+ * matemática vive aqui (fonte única de verdade) e o front só renderiza.
+ */
+function buildAnalytics() {
+  const produtos = loadJSON("products.json");
+  const store = loadJSON("store.json");
+
+  // id -> nome amigável da categoria ("todos" é filtro de UI, não categoria real).
+  const catNome = {};
+  for (const c of store.categorias || []) {
+    if (c.id !== "todos") catNome[c.id] = c.nome;
+  }
+
+  const round = (n) => Math.round(n * 100) / 100;
+  const precos = produtos.map((p) => p.preco);
+  const promo = produtos.filter((p) => p.precoDe && p.precoDe > p.preco);
+  const descontoPct = (p) => ((p.precoDe - p.preco) / p.precoDe) * 100;
+
+  const economiaTotal = promo.reduce((s, p) => s + (p.precoDe - p.preco), 0);
+  const descontoMedio = promo.length
+    ? promo.reduce((s, p) => s + descontoPct(p), 0) / promo.length
+    : 0;
+  const totalTamanhos = produtos.reduce(
+    (s, p) => s + (p.tamanhos?.length || 0),
+    0
+  );
+
+  // Agrupamento genérico por chave.
+  const agrupar = (chave) => {
+    const m = new Map();
+    for (const p of produtos) {
+      const k = chave(p);
+      const g = m.get(k) || { qtd: 0, soma: 0, promo: 0, tam: 0 };
+      g.qtd++;
+      g.soma += p.preco;
+      g.tam += p.tamanhos?.length || 0;
+      if (p.precoDe && p.precoDe > p.preco) g.promo++;
+      m.set(k, g);
+    }
+    return m;
+  };
+
+  const catMap = agrupar((p) => p.categoria);
+  const porCategoria = [...catMap.entries()]
+    .map(([id, g]) => ({
+      id,
+      nome: catNome[id] || id,
+      qtd: g.qtd,
+      precoMedio: round(g.soma / g.qtd),
+      valorTotal: round(g.soma),
+      mediaTamanhos: round(g.tam / g.qtd),
+      emPromocao: g.promo,
+    }))
+    .sort((a, b) => b.qtd - a.qtd);
+
+  const marcaMap = agrupar((p) => p.marca);
+  const porMarca = [...marcaMap.entries()]
+    .map(([marca, g]) => ({
+      marca,
+      qtd: g.qtd,
+      precoMedio: round(g.soma / g.qtd),
+      valorTotal: round(g.soma),
+      emPromocao: g.promo,
+    }))
+    .sort((a, b) => b.qtd - a.qtd);
+
+  // Histograma de preços (faixas fixas em BRL).
+  const faixasDef = [
+    [0, 100, "Até R$ 100"],
+    [100, 200, "R$ 100–200"],
+    [200, 300, "R$ 200–300"],
+    [300, 400, "R$ 300–400"],
+    [400, 600, "R$ 400–600"],
+    [600, Infinity, "R$ 600+"],
+  ];
+  const faixasPreco = faixasDef.map(([min, max, label]) => ({
+    label,
+    qtd: produtos.filter((p) => p.preco >= min && p.preco < max).length,
+  }));
+
+  // Distribuição por tag de merchandising.
+  const tagMap = new Map();
+  for (const p of produtos) {
+    const t = p.tag || "Sem etiqueta";
+    tagMap.set(t, (tagMap.get(t) || 0) + 1);
+  }
+  const tags = [...tagMap.entries()]
+    .map(([tag, qtd]) => ({ tag, qtd }))
+    .sort((a, b) => b.qtd - a.qtd);
+
+  // Matriz marca × categoria (contagem) para heatmap.
+  const categoriasMatriz = porCategoria.map((c) => ({ id: c.id, nome: c.nome }));
+  const marcasMatriz = porMarca.map((m) => m.marca);
+  const grid = marcasMatriz.map((marca) =>
+    categoriasMatriz.map(
+      (c) =>
+        produtos.filter((p) => p.marca === marca && p.categoria === c.id).length
+    )
+  );
+
+  const ordenarPreco = [...produtos].sort((a, b) => b.preco - a.preco);
+  const topCaros = ordenarPreco.slice(0, 5).map((p) => ({
+    id: p.id,
+    nome: p.nome,
+    marca: p.marca,
+    preco: p.preco,
+  }));
+
+  const topDescontos = [...promo]
+    .map((p) => ({
+      id: p.id,
+      nome: p.nome,
+      marca: p.marca,
+      preco: p.preco,
+      precoDe: p.precoDe,
+      descontoPct: round(descontoPct(p)),
+      economia: round(p.precoDe - p.preco),
+    }))
+    .sort((a, b) => b.descontoPct - a.descontoPct)
+    .slice(0, 5);
+
+  const destaques = produtos
+    .filter((p) => p.destaque)
+    .map((p) => ({
+      id: p.id,
+      nome: p.nome,
+      marca: p.marca,
+      categoria: catNome[p.categoria] || p.categoria,
+      preco: p.preco,
+      precoDe: p.precoDe,
+      tag: p.tag,
+    }));
+
+  return {
+    loja: store.nome,
+    geradoEm: new Date().toISOString(),
+    resumo: {
+      totalProdutos: produtos.length,
+      totalCategorias: porCategoria.length,
+      totalMarcas: porMarca.length,
+      precoMedio: round(precos.reduce((s, n) => s + n, 0) / precos.length),
+      precoMin: Math.min(...precos),
+      precoMax: Math.max(...precos),
+      valorCatalogo: round(precos.reduce((s, n) => s + n, 0)),
+      emPromocao: promo.length,
+      pctPromocao: round((promo.length / produtos.length) * 100),
+      descontoMedioPct: round(descontoMedio),
+      economiaTotal: round(economiaTotal),
+      emDestaque: produtos.filter((p) => p.destaque).length,
+      pctDestaque: round(
+        (produtos.filter((p) => p.destaque).length / produtos.length) * 100
+      ),
+      variacoesTamanho: totalTamanhos,
+      mediaTamanhos: round(totalTamanhos / produtos.length),
+    },
+    porCategoria,
+    porMarca,
+    faixasPreco,
+    tags,
+    matriz: { categorias: categoriasMatriz, marcas: marcasMatriz, grid },
+    topCaros,
+    topDescontos,
+    destaques,
+  };
+}
+
+// Protegido: exige sessão Supabase válida (Authorization: Bearer <token>).
+app.get("/api/analytics", authMiddleware, (_req, res) => {
+  res.json(buildAnalytics());
+});
+
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
+
+// Painel administrativo (BI) — protegido por login no front (padrão do projeto).
+app.get(["/admin", "/dashboard"], (_req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, "admin.html"));
+});
 
 // SPA fallback — qualquer rota não-API entrega o catálogo
 app.get("*", (_req, res) => {
