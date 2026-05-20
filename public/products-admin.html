@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor de Produtos · Villa Vip</title>
+  <meta name="robots" content="noindex">
+  <link rel="shortcut icon" href="/assets/logo-mark.svg" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/admin.css">
+</head>
+
+<body class="dash">
+
+  <!-- Topbar -->
+  <header class="dash-top">
+    <div class="dash-top-wrap">
+      <a class="dash-brand" href="/" title="Voltar ao catálogo">
+        <svg class="dash-longhorn" viewBox="0 0 240 200" aria-hidden="true">
+          <path fill="currentColor" d="M120 80C104 82 80 80 58 72C38 64 22 50 14 36C26 46 48 52 70 52C92 52 110 60 120 78C130 60 148 52 170 52C192 52 214 46 226 36C218 50 202 64 182 72C160 80 136 82 120 80Z" />
+          <path fill="currentColor" d="M78 84 L120 170 L162 84 L139 84 L120 126 L101 84 Z" />
+        </svg>
+        <span>
+          <strong>Villa Vip</strong>
+          <small>Editor de Produtos</small>
+        </span>
+      </a>
+
+      <div class="dash-top-actions">
+        <span class="dash-stamp" id="stamp">Carregando…</span>
+        <a class="dash-btn ghost" href="/admin" title="Painel de inteligência">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 3v18h18" />
+            <path d="m7 14 4-4 4 4 5-6" />
+          </svg>
+          <span>Inteligência</span>
+        </a>
+        <a class="dash-btn ghost" href="/" title="Catálogo público">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 9 12 2l9 7" />
+            <path d="M5 9v11h14V9" />
+            <path d="M9 20v-6h6v6" />
+          </svg>
+          <span>Catálogo</span>
+        </a>
+        <div class="dash-user">
+          <span class="dash-avatar" id="userInitial">V</span>
+          <span class="dash-uname" id="userName">—</span>
+        </div>
+        <button type="button" class="dash-btn solid" id="btnNewProduct">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5v14" />
+            <path d="M5 12h14" />
+          </svg>
+          <span>Novo Produto</span>
+        </button>
+        <button type="button" class="dash-btn ghost" id="btnLogout" title="Encerrar sessão">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <path d="m16 17 5-5-5-5" />
+            <path d="M21 12H9" />
+          </svg>
+          <span>Sair</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="dash-main" id="dashMain" aria-busy="true">
+
+    <!-- States -->
+    <div class="dash-state" id="loadingState">
+      <div class="dash-spinner" aria-hidden="true"></div>
+      <p>Carregando produtos…</p>
+    </div>
+    <div class="dash-state err" id="errorState" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      <p id="errorMsg">Não foi possível carregar os dados.</p>
+      <button type="button" class="dash-btn solid" id="btnRetry">Tentar novamente</button>
+    </div>
+    <div class="dash-state err" id="denyState" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="11" width="18" height="11" rx="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      </svg>
+      <p><strong>Acesso restrito a administradores</strong></p>
+      <p class="dash-state-sub">Sua conta não tem permissão para acessar esta área.</p>
+      <div class="dash-state-actions">
+        <a class="dash-btn ghost dark" href="/">Voltar ao catálogo</a>
+        <button type="button" class="dash-btn solid" id="btnDenyLogout">Trocar de conta</button>
+      </div>
+    </div>
+
+    <!-- Conteúdo principal -->
+    <div id="pageContent" hidden>
+
+      <section class="dash-head pe-head">
+        <div>
+          <h1>Produtos</h1>
+          <p id="productCount">—</p>
+        </div>
+        <div class="pe-toolbar">
+          <input class="pe-search" id="searchInput" type="search" placeholder="Buscar por nome, marca ou ref…" aria-label="Buscar produto">
+          <select class="pe-select" id="catFilter" aria-label="Filtrar por categoria">
+            <option value="">Todas as categorias</option>
+          </select>
+        </div>
+      </section>
+
+      <div class="pe-table-wrap">
+        <div class="table-scroll">
+          <table class="dash-table pe-table" id="productsTable">
+            <thead>
+              <tr>
+                <th>Ref.</th>
+                <th>Nome</th>
+                <th>Categoria</th>
+                <th>Marca</th>
+                <th class="num">Preço</th>
+                <th class="num">De</th>
+                <th>Tag</th>
+                <th class="tc">Destaque</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="productsBody"></tbody>
+          </table>
+        </div>
+        <p class="pe-empty" id="emptyMsg" hidden>Nenhum produto encontrado.</p>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Modal: formulário de produto (criar / editar) -->
+  <div class="pe-overlay" id="formOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="formTitle">
+    <div class="pe-modal">
+      <header class="pe-modal-head">
+        <h2 id="formTitle">Novo Produto</h2>
+        <button class="pe-modal-close" id="formClose" type="button" aria-label="Fechar">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+      </header>
+
+      <form id="productForm" class="pe-form" novalidate>
+        <p class="pe-form-msg" id="formMsg" hidden></p>
+
+        <div class="pe-row">
+          <div class="pe-field">
+            <label for="fId">Referência (ID) <span aria-hidden="true">*</span></label>
+            <input type="text" id="fId" placeholder="Ex: BT-105" required autocomplete="off">
+          </div>
+          <div class="pe-field pe-field--check">
+            <label class="pe-check-label">
+              <input type="checkbox" id="fDestaque">
+              <span>Destaque na vitrine</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="pe-field">
+          <label for="fNome">Nome do produto <span aria-hidden="true">*</span></label>
+          <input type="text" id="fNome" placeholder="Ex: Bota Texana Couro Legítimo Bico Fino" required>
+        </div>
+
+        <div class="pe-row">
+          <div class="pe-field">
+            <label for="fCategoria">Categoria <span aria-hidden="true">*</span></label>
+            <select id="fCategoria" required>
+              <option value="">Selecionar…</option>
+            </select>
+          </div>
+          <div class="pe-field">
+            <label for="fMarca">Marca <span aria-hidden="true">*</span></label>
+            <select id="fMarca" required>
+              <option value="">Selecionar…</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pe-row">
+          <div class="pe-field">
+            <label for="fPreco">Preço atual (R$) <span aria-hidden="true">*</span></label>
+            <input type="number" id="fPreco" min="0" step="0.01" placeholder="0,00" required>
+          </div>
+          <div class="pe-field">
+            <label for="fPrecoDe">Preço "de" (R$) <small>— opcional, cria desconto</small></label>
+            <input type="number" id="fPrecoDe" min="0" step="0.01" placeholder="0,00">
+          </div>
+        </div>
+
+        <div class="pe-field">
+          <label for="fDescricao">Descrição</label>
+          <textarea id="fDescricao" rows="3" placeholder="Descreva o produto, materiais, diferenciais…"></textarea>
+        </div>
+
+        <div class="pe-field">
+          <label>Imagem do produto</label>
+          <div class="pe-img-section">
+            <div class="pe-img-preview-wrap" id="imgPreviewWrap" hidden>
+              <img class="pe-img-preview" id="imgPreview" alt="Preview da imagem">
+              <button type="button" class="pe-img-remove" id="imgRemove">Remover imagem</button>
+            </div>
+            <label class="pe-img-drop" id="imgDrop" for="fImagem">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Arraste uma foto ou clique para escolher</span>
+              <small>JPG, PNG ou WebP · máx. 8 MB</small>
+              <input type="file" id="fImagem" accept="image/jpeg,image/png,image/webp">
+            </label>
+            <div class="pe-img-url-row">
+              <span class="pe-img-or">ou cole uma URL</span>
+              <input type="url" id="fImagemUrl" class="pe-img-url" placeholder="https://exemplo.com/foto.jpg" autocomplete="off">
+            </div>
+            <p class="pe-img-status" id="imgStatus" hidden></p>
+          </div>
+        </div>
+
+        <div class="pe-field">
+          <label>Tamanhos disponíveis</label>
+          <div class="pe-tags" id="tagsContainer" role="group" aria-label="Tamanhos">
+            <input class="pe-tag-input" id="tagsInput" type="text" placeholder="Digite e pressione Enter…" autocomplete="off">
+          </div>
+          <small class="pe-hint">Pressione Enter ou vírgula para adicionar. Backspace remove o último.</small>
+        </div>
+
+        <div class="pe-field">
+          <label for="fTag">Etiqueta de merchandising</label>
+          <select id="fTag">
+            <option value="">Sem etiqueta</option>
+            <option value="Novo">Novo</option>
+            <option value="Mais vendido">Mais vendido</option>
+          </select>
+        </div>
+
+        <footer class="pe-form-foot">
+          <button type="button" class="dash-btn ghost dark" id="formCancel">Cancelar</button>
+          <button type="submit" class="dash-btn solid" id="formSubmit">Criar produto</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: confirmação de exclusão -->
+  <div class="pe-overlay" id="deleteOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="deleteTitle">
+    <div class="pe-modal pe-modal--sm">
+      <header class="pe-modal-head">
+        <h2 id="deleteTitle">Excluir produto</h2>
+        <button class="pe-modal-close" id="deleteClose" type="button" aria-label="Fechar">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+      </header>
+      <p class="pe-confirm-text">Tem certeza que quer excluir <strong id="deleteName"></strong>? Essa ação não pode ser desfeita.</p>
+      <div class="pe-confirm-actions">
+        <button type="button" class="dash-btn ghost dark" id="deleteCancelBtn">Cancelar</button>
+        <button type="button" class="dash-btn danger" id="deleteConfirmBtn">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function guard() {
+      const token = localStorage.getItem("token");
+      if (!token) { window.location.replace("/login.html"); return; }
+      try {
+        const u = JSON.parse(localStorage.getItem("user") || "null");
+        if (u && u.nome) {
+          document.getElementById("userName").textContent = u.nome;
+          document.getElementById("userInitial").textContent = u.nome.trim().charAt(0).toUpperCase() || "V";
+        }
+      } catch { /* perfil corrompido */ }
+    })();
+  </script>
+  <script src="/products-admin.js"></script>
+</body>
+
+</html>

@@ -12,7 +12,8 @@
     "node": ">=18"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "multer": "^2.1.1"
   },
   "author": "Sync Services",
   "license": "UNLICENSED",

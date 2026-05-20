@@ -84,11 +84,25 @@ function catIconKey(cat) {
   return { camisas: "shirt", "jeans-fem": "jeans", masculino: "man", acessorios: "belt", botas: "boot", chapeus: "hat" }[cat] || "grid";
 }
 
-/* ---------- Mídia (placeholder ilustrado por categoria) ---------- */
+/* ---------- Mídia (foto real ou placeholder ilustrado por categoria) ---------- */
 function mediaHTML(p, tagInside) {
+  const tagHTML = tagInside && p.tag
+    ? `<span class="tag ${p.tag === "Novo" ? "novo" : ""}">${p.tag}</span>`
+    : "";
+  if (p.imagem) {
+    return `
+      <div class="card-media m-${p.categoria} has-img">
+        ${tagHTML}
+        <img class="card-img" src="${escapeHTML(p.imagem)}" alt="${escapeHTML(p.nome)}"
+          onerror="this.closest('.card-media').classList.remove('has-img')">
+        <span class="wm" aria-hidden="true">${BULL}</span>
+        <span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>
+        <span class="m-brand">${p.marca}</span>
+      </div>`;
+  }
   return `
     <div class="card-media m-${p.categoria}">
-      ${tagInside && p.tag ? `<span class="tag ${p.tag === "Novo" ? "novo" : ""}">${p.tag}</span>` : ""}
+      ${tagHTML}
       <span class="wm" aria-hidden="true">${BULL}</span>
       <span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>
       <span class="m-brand">${p.marca}</span>
@@ -601,11 +615,16 @@ function openSheet(id, produtos) {
   state.size = null;
   state.qty = 1;
 
-  $("sheetMedia").className = "sheet-media m-" + p.categoria;
-  $("sheetMedia").innerHTML = `
-    <span class="wm" aria-hidden="true">${BULL}</span>
-    <span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>
-    <span class="m-brand">${p.marca}</span>`;
+  $("sheetMedia").className = "sheet-media m-" + p.categoria + (p.imagem ? " has-img" : "");
+  $("sheetMedia").innerHTML = p.imagem
+    ? `<img class="sheet-img" src="${escapeHTML(p.imagem)}" alt="${escapeHTML(p.nome)}"
+         onerror="this.closest('.sheet-media').classList.remove('has-img')">
+       <span class="wm" aria-hidden="true">${BULL}</span>
+       <span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>
+       <span class="m-brand">${p.marca}</span>`
+    : `<span class="wm" aria-hidden="true">${BULL}</span>
+       <span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>
+       <span class="m-brand">${p.marca}</span>`;
   $("sheetBrand").textContent = p.marca;
   $("sheetName").textContent = p.nome;
   $("sheetDesc").textContent = p.descricao;
