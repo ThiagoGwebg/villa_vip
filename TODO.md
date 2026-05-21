@@ -5,7 +5,7 @@
 - [X] Criar editor de produtos no painel admin (CRUD com formulário)
 
 ## UX (experiência do usuário)
-- [ ] Implementar lista de desejos (wishlist) com localStorage
+- [X] Implementar lista de desejos (wishlist) com localStorage
 - [ ] Adicionar sistema de status de pedido (admin atualiza, usuário acompanha)
 - [-] Configurar notificações por email (confirmação de cadastro e pedido via Supabase SMTP)
 

@@ -40,6 +40,12 @@
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
         </button>
+        <button class="icon-btn" id="wishlistToggle" aria-label="Abrir lista de desejos">
+          <svg viewBox="0 0 24 24" class="ico">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+          <span class="cart-count" id="wishlistCount" hidden>0</span>
+        </button>
         <button class="icon-btn cart-btn" id="cartToggle" aria-label="Abrir sacola">
           <svg viewBox="0 0 24 24" class="ico">
             <path d="M6 7h12l-1.2 12.2a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8L6 7Z" />
@@ -176,6 +182,9 @@
   <div class="sheet-overlay" id="sheetOverlay" hidden>
     <div class="sheet" id="productSheet" role="dialog" aria-modal="true" aria-labelledby="sheetName">
       <button class="sheet-close" id="sheetClose" aria-label="Fechar">&times;</button>
+      <button class="sheet-wish" id="btnSheetWish" aria-label="Salvar nos desejos">
+        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </button>
       <div class="sheet-media" id="sheetMedia"></div>
       <div class="sheet-body">
         <span class="sheet-brand" id="sheetBrand"></span>
@@ -285,6 +294,21 @@
       </form>
     </div>
   </div>
+</div>
+
+<!-- ===================== LISTA DE DESEJOS ===================== -->
+<div class="sheet-overlay" id="wishlistOverlay" hidden>
+  <aside class="cart-drawer" id="wishlistDrawer" role="dialog" aria-modal="true" aria-label="Lista de desejos">
+    <div class="cart-head">
+      <h2>Lista de Desejos</h2>
+      <button class="sheet-close" id="wishlistClose" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="cart-items" id="wishlistItems"></div>
+    <div class="cart-foot">
+      <p class="cart-note">Produtos salvos ficam aqui mesmo após fechar o navegador.</p>
+      <button class="btn-ghost" id="btnClearWishlist">Limpar lista</button>
+    </div>
+  </aside>
 </div>
 
 <div class="toast" id="toast" hidden></div>

@@ -18,6 +18,7 @@ const fs = require("fs");
 const multer = require("multer");
 const authRoutes = require("./routes/auth");
 const orderRoutes = require("./routes/orders");
+const userDataRoutes = require("./routes/userData");
 const authMiddleware = require("./middlewares/authMiddleware");
 const adminMiddleware = require("./middlewares/adminMiddleware");
 
@@ -70,6 +71,7 @@ function normalize(str) {
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/user-data', userDataRoutes);
 
 // Compressão leve via headers + cache de assets estáticos (catálogo "leve e rápido")
 app.use(
