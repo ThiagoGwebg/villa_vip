@@ -4,10 +4,21 @@
     "nome": "Bota Texana Couro Legítimo Bico Fino",
     "categoria": "botas",
     "marca": "Eldorado",
-    "preco": 599.90,
-    "precoDe": 749.90,
+    "preco": 599.9,
+    "precoDe": 749.9,
     "descricao": "Bota texana em couro legítimo, cano longo, solado costurado e bico fino tradicional. Conforto e durabilidade para o dia a dia no campo ou na cidade.",
-    "tamanhos": ["34", "35", "36", "37", "38", "39", "40", "41", "42", "43"],
+    "tamanhos": [
+      "34",
+      "35",
+      "36",
+      "37",
+      "38",
+      "39",
+      "40",
+      "41",
+      "42",
+      "43"
+    ],
     "tag": "Mais vendido",
     "destaque": true
   },
@@ -16,10 +27,20 @@
     "nome": "Bota Texana Montaria Cano Alto",
     "categoria": "botas",
     "marca": "Austin Western",
-    "preco": 689.90,
+    "preco": 689.9,
     "precoDe": null,
     "descricao": "Modelo de montaria com cano alto reforçado, ideal para lida e rodeio. Couro encerado resistente a água.",
-    "tamanhos": ["36", "37", "38", "39", "40", "41", "42", "43", "44"],
+    "tamanhos": [
+      "36",
+      "37",
+      "38",
+      "39",
+      "40",
+      "41",
+      "42",
+      "43",
+      "44"
+    ],
     "tag": "Novo",
     "destaque": true
   },
@@ -28,10 +49,17 @@
     "nome": "Bota Texana Feminina Bordada",
     "categoria": "botas",
     "marca": "Eldorado",
-    "preco": 529.90,
-    "precoDe": 629.90,
+    "preco": 529.9,
+    "precoDe": 629.9,
     "descricao": "Bota feminina com bordado artesanal lateral, salto trançado e bico moderno. Estilo country com toque feminino.",
-    "tamanhos": ["34", "35", "36", "37", "38", "39"],
+    "tamanhos": [
+      "34",
+      "35",
+      "36",
+      "37",
+      "38",
+      "39"
+    ],
     "tag": null,
     "destaque": false
   },
@@ -40,10 +68,19 @@
     "nome": "Botina Trabalho Bico de Aço",
     "categoria": "botas",
     "marca": "Tomahawk",
-    "preco": 329.90,
+    "preco": 329.9,
     "precoDe": null,
     "descricao": "Botina robusta para lida pesada, bico de aço e solado antiderrapante. Couro tratado de alta resistência.",
-    "tamanhos": ["37", "38", "39", "40", "41", "42", "43", "44"],
+    "tamanhos": [
+      "37",
+      "38",
+      "39",
+      "40",
+      "41",
+      "42",
+      "43",
+      "44"
+    ],
     "tag": null,
     "destaque": false
   },
@@ -52,10 +89,18 @@
     "nome": "Chapéu Country Feltro Premium",
     "categoria": "chapeus",
     "marca": "Western Blue",
-    "preco": 389.90,
-    "precoDe": 459.90,
+    "preco": 389.9,
+    "precoDe": 459.9,
     "descricao": "Chapéu de feltro premium com aba moldável e fita de couro. Acabamento impecável para o look country completo.",
-    "tamanhos": ["54", "55", "56", "57", "58", "59", "60"],
+    "tamanhos": [
+      "54",
+      "55",
+      "56",
+      "57",
+      "58",
+      "59",
+      "60"
+    ],
     "tag": "Mais vendido",
     "destaque": true
   },
@@ -64,10 +109,15 @@
     "nome": "Chapéu Palha Shantung Aba Larga",
     "categoria": "chapeus",
     "marca": "TX Farm",
-    "preco": 249.90,
+    "preco": 249.9,
     "precoDe": null,
     "descricao": "Chapéu de palha shantung leve e respirável, aba larga para proteção solar. Perfeito para o verão no campo.",
-    "tamanhos": ["54", "56", "58", "60"],
+    "tamanhos": [
+      "54",
+      "56",
+      "58",
+      "60"
+    ],
     "tag": "Novo",
     "destaque": false
   },
@@ -76,10 +126,16 @@
     "nome": "Chapéu Feminino Country com Tiara",
     "categoria": "chapeus",
     "marca": "Helazza",
-    "preco": 219.90,
-    "precoDe": 279.90,
+    "preco": 219.9,
+    "precoDe": 279.9,
     "descricao": "Chapéu feminino com detalhe de tiara e fita decorativa. Combina elegância e identidade country.",
-    "tamanhos": ["54", "55", "56", "57", "58"],
+    "tamanhos": [
+      "54",
+      "55",
+      "56",
+      "57",
+      "58"
+    ],
     "tag": null,
     "destaque": false
   },
@@ -88,10 +144,16 @@
     "nome": "Camisa Xadrez Manga Longa Slim",
     "categoria": "camisas",
     "marca": "TX Farm",
-    "preco": 169.90,
-    "precoDe": 199.90,
+    "preco": 169.9,
+    "precoDe": 199.9,
     "descricao": "Camisa xadrez de algodão, modelagem slim, botões em madrepérola. Clássico country que não sai de moda.",
-    "tamanhos": ["P", "M", "G", "GG", "XG"],
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "XG"
+    ],
     "tag": "Mais vendido",
     "destaque": true
   },
@@ -100,10 +162,15 @@
     "nome": "T-Shirt Country Estampada",
     "categoria": "camisas",
     "marca": "Western Blue",
-    "preco": 89.90,
+    "preco": 89.9,
     "precoDe": null,
     "descricao": "Camiseta de algodão com estampa country exclusiva. Caimento confortável para o dia a dia.",
-    "tamanhos": ["P", "M", "G", "GG"],
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG"
+    ],
     "tag": null,
     "destaque": false
   },
@@ -112,10 +179,15 @@
     "nome": "Camisa Bordada Feminina Country",
     "categoria": "camisas",
     "marca": "Helazza",
-    "preco": 189.90,
-    "precoDe": 229.90,
+    "preco": 189.9,
+    "precoDe": 229.9,
     "descricao": "Camisa feminina com bordado floral no peito e ajuste na cintura. Estilo e personalidade.",
-    "tamanhos": ["P", "M", "G", "GG"],
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG"
+    ],
     "tag": "Novo",
     "destaque": false
   },
@@ -124,10 +196,16 @@
     "nome": "Camisa Manga Curta Casual Country",
     "categoria": "camisas",
     "marca": "Tomahawk",
-    "preco": 139.90,
+    "preco": 139.9,
     "precoDe": null,
     "descricao": "Camisa manga curta em tecido leve, ideal para os dias quentes mantendo o estilo country.",
-    "tamanhos": ["P", "M", "G", "GG", "XG"],
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "XG"
+    ],
     "tag": null,
     "destaque": false
   },
@@ -136,10 +214,17 @@
     "nome": "Calça Jeans Feminina Cintura Alta",
     "categoria": "jeans-fem",
     "marca": "Helazza",
-    "preco": 219.90,
-    "precoDe": 269.90,
+    "preco": 219.9,
+    "precoDe": 269.9,
     "descricao": "Jeans feminino cintura alta, modelagem que valoriza a silhueta, lavagem média com elastano para conforto.",
-    "tamanhos": ["36", "38", "40", "42", "44", "46"],
+    "tamanhos": [
+      "36",
+      "38",
+      "40",
+      "42",
+      "44",
+      "46"
+    ],
     "tag": "Mais vendido",
     "destaque": true
   },
@@ -148,10 +233,16 @@
     "nome": "Calça Jeans Feminina Flare",
     "categoria": "jeans-fem",
     "marca": "Western Blue",
-    "preco": 239.90,
+    "preco": 239.9,
     "precoDe": null,
     "descricao": "Modelo flare com barra ampla, ideal para usar com bota texana. Lavagem escura sofisticada.",
-    "tamanhos": ["36", "38", "40", "42", "44"],
+    "tamanhos": [
+      "36",
+      "38",
+      "40",
+      "42",
+      "44"
+    ],
     "tag": "Novo",
     "destaque": false
   },
@@ -160,10 +251,17 @@
     "nome": "Calça Jeans Feminina Skinny Destroyed",
     "categoria": "jeans-fem",
     "marca": "TX Farm",
-    "preco": 199.90,
-    "precoDe": 249.90,
+    "preco": 199.9,
+    "precoDe": 249.9,
     "descricao": "Skinny com puídos sutis e ótima recuperação. Conforto e atitude para o look country urbano.",
-    "tamanhos": ["36", "38", "40", "42", "44", "46"],
+    "tamanhos": [
+      "36",
+      "38",
+      "40",
+      "42",
+      "44",
+      "46"
+    ],
     "tag": null,
     "destaque": false
   },
@@ -172,10 +270,17 @@
     "nome": "Calça Jeans Masculina Reta Country",
     "categoria": "masculino",
     "marca": "TX Farm",
-    "preco": 229.90,
+    "preco": 229.9,
     "precoDe": null,
     "descricao": "Jeans masculino corte reto, tecido resistente para a lida, bolsos reforçados.",
-    "tamanhos": ["38", "40", "42", "44", "46", "48"],
+    "tamanhos": [
+      "38",
+      "40",
+      "42",
+      "44",
+      "46",
+      "48"
+    ],
     "tag": "Mais vendido",
     "destaque": true
   },
@@ -184,10 +289,16 @@
     "nome": "Jaqueta Jeans Masculina Forrada",
     "categoria": "masculino",
     "marca": "Western Blue",
-    "preco": 359.90,
-    "precoDe": 429.90,
+    "preco": 359.9,
+    "precoDe": 429.9,
     "descricao": "Jaqueta jeans com forro interno quentinho, perfeita para as noites frias no campo.",
-    "tamanhos": ["P", "M", "G", "GG", "XG"],
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "XG"
+    ],
     "tag": "Novo",
     "destaque": false
   },
@@ -196,10 +307,15 @@
     "nome": "Colete Country Masculino",
     "categoria": "masculino",
     "marca": "Eldorado",
-    "preco": 199.90,
+    "preco": 199.9,
     "precoDe": null,
     "descricao": "Colete acolchoado com bolsos utilitários, complemento essencial do guarda-roupa country.",
-    "tamanhos": ["P", "M", "G", "GG"],
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG"
+    ],
     "tag": null,
     "destaque": false
   },
@@ -208,10 +324,17 @@
     "nome": "Cinto de Couro com Fivela Country",
     "categoria": "acessorios",
     "marca": "Austin Western",
-    "preco": 159.90,
-    "precoDe": 199.90,
+    "preco": 159.9,
+    "precoDe": 199.9,
     "descricao": "Cinto em couro legítimo com fivela country trabalhada. Detalhe que fecha o visual.",
-    "tamanhos": ["85", "90", "95", "100", "105", "110"],
+    "tamanhos": [
+      "85",
+      "90",
+      "95",
+      "100",
+      "105",
+      "110"
+    ],
     "tag": "Mais vendido",
     "destaque": true
   },
@@ -220,10 +343,12 @@
     "nome": "Fivela Country Banhada",
     "categoria": "acessorios",
     "marca": "Tomahawk",
-    "preco": 129.90,
+    "preco": 129.9,
     "precoDe": null,
     "descricao": "Fivela country com acabamento banhado e relevo artesanal. Vendida separadamente.",
-    "tamanhos": ["Único"],
+    "tamanhos": [
+      "Único"
+    ],
     "tag": null,
     "destaque": false
   },
@@ -232,10 +357,12 @@
     "nome": "Carteira de Couro Country",
     "categoria": "acessorios",
     "marca": "Eldorado",
-    "preco": 99.90,
-    "precoDe": 129.90,
+    "preco": 99.9,
+    "precoDe": 129.9,
     "descricao": "Carteira compacta em couro legítimo, costura reforçada e múltiplos compartimentos.",
-    "tamanhos": ["Único"],
+    "tamanhos": [
+      "Único"
+    ],
     "tag": null,
     "destaque": false
   },
@@ -244,10 +371,12 @@
     "nome": "Bolsa Feminina Country em Couro",
     "categoria": "acessorios",
     "marca": "Helazza",
-    "preco": 289.90,
-    "precoDe": 349.90,
+    "preco": 289.9,
+    "precoDe": 349.9,
     "descricao": "Bolsa feminina em couro com franjas e detalhes country. Espaçosa e estilosa.",
-    "tamanhos": ["Único"],
+    "tamanhos": [
+      "Único"
+    ],
     "tag": "Novo",
     "destaque": false
   },
@@ -256,10 +385,12 @@
     "nome": "Boné Country Trucker",
     "categoria": "acessorios",
     "marca": "TX Farm",
-    "preco": 79.90,
+    "preco": 79.9,
     "precoDe": null,
     "descricao": "Boné trucker com tela traseira respirável e bordado country frontal. Ajuste único.",
-    "tamanhos": ["Único"],
+    "tamanhos": [
+      "Único"
+    ],
     "tag": null,
     "destaque": false
   }

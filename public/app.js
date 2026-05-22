@@ -22,6 +22,7 @@ const state = {
   size: null,
   qty: 1,
   cart: loadCart(),
+  wishlist: loadWishlist(),
   user: loadUser(),
 };
 
@@ -32,6 +33,18 @@ function loadUser() {
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
+  }
+}
+
+/** Lê a lista de desejos do localStorage de forma resiliente. */
+function loadWishlist() {
+  try {
+    const raw = localStorage.getItem("vv_wishlist");
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    localStorage.removeItem("vv_wishlist");
+    return [];
   }
 }
 
@@ -84,11 +97,25 @@ function catIconKey(cat) {
   return { camisas: "shirt", "jeans-fem": "jeans", masculino: "man", acessorios: "belt", botas: "boot", chapeus: "hat" }[cat] || "grid";
 }
 
-/* ---------- Mídia (placeholder ilustrado por categoria) ---------- */
+/* ---------- Mídia (foto real ou placeholder ilustrado por categoria) ---------- */
 function mediaHTML(p, tagInside) {
+  const tagHTML = tagInside && p.tag
+    ? `<span class="tag ${p.tag === "Novo" ? "novo" : ""}">${p.tag}</span>`
+    : "";
+  if (p.imagem) {
+    return `
+      <div class="card-media m-${p.categoria} has-img">
+        ${tagHTML}
+        <img class="card-img" src="${escapeHTML(p.imagem)}" alt="${escapeHTML(p.nome)}"
+          onerror="this.closest('.card-media').classList.remove('has-img')">
+        <span class="wm" aria-hidden="true">${BULL}</span>
+        <span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>
+        <span class="m-brand">${p.marca}</span>
+      </div>`;
+  }
   return `
     <div class="card-media m-${p.categoria}">
-      ${tagInside && p.tag ? `<span class="tag ${p.tag === "Novo" ? "novo" : ""}">${p.tag}</span>` : ""}
+      ${tagHTML}
       <span class="wm" aria-hidden="true">${BULL}</span>
       <span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>
       <span class="m-brand">${p.marca}</span>
@@ -102,6 +129,8 @@ async function init() {
   bindEvents();
   await loadProducts();
   updateCartBadge();
+  updateWishlistBadge();
+  await loadFromServer();
 }
 
 function renderChrome() {
@@ -360,8 +389,14 @@ function toggleUserMenu(e) {
 function handleLogout() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
+  localStorage.removeItem("vv_cart");
+  localStorage.removeItem("vv_wishlist");
   state.user = null;
+  state.cart = [];
+  state.wishlist = [];
   $("userDropdown").hidden = true;
+  updateCartBadge();
+  updateWishlistBadge();
   renderAuth();
   flash("Você saiu da conta.");
 }
@@ -570,11 +605,15 @@ async function loadProducts() {
   }
   $("emptyState").hidden = true;
 
+  const HEART_SVG = `<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+
   grid.innerHTML = produtos
-    .map(
-      (p) => `
+    .map((p) => {
+      const wl = isWishlisted(p.id);
+      return `
       <article class="card" data-id="${p.id}">
         ${mediaHTML(p, true)}
+        <button class="btn-wish${wl ? " active" : ""}" data-wish="${p.id}" aria-label="${wl ? "Remover dos desejos" : "Salvar nos desejos"}">${HEART_SVG}</button>
         <div class="card-body">
           <span class="c-brand">${p.marca}</span>
           <h3 class="c-name">${p.nome}</h3>
@@ -584,12 +623,22 @@ async function loadProducts() {
           </div>
           <button class="c-cta">Ver e pedir</button>
         </div>
-      </article>`
-    )
+      </article>`;
+    })
     .join("");
 
   grid.querySelectorAll(".card").forEach((el) =>
-    el.addEventListener("click", () => openSheet(el.dataset.id, produtos))
+    el.addEventListener("click", (e) => {
+      if (e.target.closest(".btn-wish")) return;
+      openSheet(el.dataset.id, produtos);
+    })
+  );
+  grid.querySelectorAll(".btn-wish").forEach((btn) =>
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const p = produtos.find((x) => x.id === btn.dataset.wish);
+      if (p) toggleWishlist(p);
+    })
   );
 }
 
@@ -601,11 +650,16 @@ function openSheet(id, produtos) {
   state.size = null;
   state.qty = 1;
 
-  $("sheetMedia").className = "sheet-media m-" + p.categoria;
-  $("sheetMedia").innerHTML = `
-    <span class="wm" aria-hidden="true">${BULL}</span>
-    <span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>
-    <span class="m-brand">${p.marca}</span>`;
+  $("sheetMedia").className = "sheet-media m-" + p.categoria + (p.imagem ? " has-img" : "");
+  $("sheetMedia").innerHTML = p.imagem
+    ? `<img class="sheet-img" src="${escapeHTML(p.imagem)}" alt="${escapeHTML(p.nome)}"
+         onerror="this.closest('.sheet-media').classList.remove('has-img')">
+       <span class="wm" aria-hidden="true">${BULL}</span>
+       <span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>
+       <span class="m-brand">${p.marca}</span>`
+    : `<span class="wm" aria-hidden="true">${BULL}</span>
+       <span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>
+       <span class="m-brand">${p.marca}</span>`;
   $("sheetBrand").textContent = p.marca;
   $("sheetName").textContent = p.nome;
   $("sheetDesc").textContent = p.descricao;
@@ -634,6 +688,9 @@ function openSheet(id, produtos) {
       })
     );
   $("qtyValue").textContent = "1";
+  const sw = $("btnSheetWish");
+  sw.classList.toggle("active", isWishlisted(p.id));
+  sw.setAttribute("aria-label", isWishlisted(p.id) ? "Remover dos desejos" : "Salvar nos desejos");
   openOverlay("sheetOverlay");
 }
 
@@ -676,10 +733,127 @@ function buyNow() {
   window.open(waLink(msgProduto(p, state.size, state.qty)), "_blank");
 }
 
+/* ---------- Sync sacola/favoritos com servidor ---------- */
+async function loadFromServer() {
+  if (!state.user) { console.log("[VV] loadFromServer: pulou (sem usuário)"); return; }
+  try {
+    console.log("[VV] loadFromServer: buscando dados do usuário", state.user.id);
+    const res = await authFetch("/api/user-data");
+    if (!res) { console.error("[VV] loadFromServer: sessão inválida ou sem token"); return; }
+    if (!res.ok) { console.error("[VV] loadFromServer: erro HTTP", res.status, await res.text()); return; }
+    const data = await res.json();
+    console.log("[VV] loadFromServer: recebeu", JSON.stringify(data));
+    state.cart = Array.isArray(data.cart) ? data.cart : [];
+    state.wishlist = Array.isArray(data.wishlist) ? data.wishlist : [];
+    localStorage.setItem("vv_cart", JSON.stringify(state.cart));
+    localStorage.setItem("vv_wishlist", JSON.stringify(state.wishlist));
+    updateCartBadge();
+    updateWishlistBadge();
+  } catch (err) {
+    console.error("[VV] loadFromServer exception:", err);
+  }
+}
+
+async function syncToServer() {
+  if (!state.user) return;
+  try {
+    console.log("[VV] syncToServer: salvando", state.cart.length, "itens na sacola,", state.wishlist.length, "favoritos");
+    const res = await authFetch("/api/user-data", {
+      method: "PUT",
+      body: JSON.stringify({ cart: state.cart, wishlist: state.wishlist }),
+    });
+    if (!res) { console.error("[VV] syncToServer: sem resposta (token inválido?)"); return; }
+    if (!res.ok) { console.error("[VV] syncToServer: erro HTTP", res.status, await res.text()); return; }
+    console.log("[VV] syncToServer: OK");
+  } catch (err) {
+    console.error("[VV] syncToServer exception:", err);
+  }
+}
+
+/* ---------- Lista de Desejos ---------- */
+function saveWishlist() {
+  localStorage.setItem("vv_wishlist", JSON.stringify(state.wishlist));
+  updateWishlistBadge();
+  syncToServer();
+}
+function updateWishlistBadge() {
+  const n = state.wishlist.length;
+  const badge = $("wishlistCount");
+  badge.textContent = n;
+  badge.hidden = n === 0;
+}
+function isWishlisted(id) {
+  return state.wishlist.some((i) => i.id === id);
+}
+function toggleWishlist(p) {
+  const idx = state.wishlist.findIndex((i) => i.id === p.id);
+  if (idx >= 0) {
+    state.wishlist.splice(idx, 1);
+    flash("Removido da lista de desejos");
+  } else {
+    state.wishlist.push({
+      id: p.id,
+      nome: p.nome,
+      marca: p.marca,
+      categoria: p.categoria,
+      preco: p.preco,
+      precoDe: p.precoDe || null,
+      imagem: p.imagem || null,
+      tag: p.tag || null,
+      tamanhos: p.tamanhos || [],
+    });
+    flash("Salvo na lista de desejos ♥");
+  }
+  saveWishlist();
+  syncWishIcons(p.id);
+}
+function syncWishIcons(id) {
+  const on = isWishlisted(id);
+  document.querySelectorAll(`.card[data-id="${id}"] .btn-wish`).forEach((b) => {
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-label", on ? "Remover dos desejos" : "Salvar nos desejos");
+  });
+  const sw = $("btnSheetWish");
+  if (sw && state.current && state.current.id === id) {
+    sw.classList.toggle("active", on);
+    sw.setAttribute("aria-label", on ? "Remover dos desejos" : "Salvar nos desejos");
+  }
+}
+function renderWishlist() {
+  const box = $("wishlistItems");
+  if (!state.wishlist.length) {
+    box.innerHTML = `<p class="cart-empty">Sua lista de desejos está vazia.<br>Toque no ♥ em qualquer produto para salvar.</p>`;
+    return;
+  }
+  box.innerHTML = state.wishlist
+    .map(
+      (item, idx) => `
+      <div class="ci">
+        <div class="ci-thumb m-${item.categoria}">${catIcon(item.categoria)}</div>
+        <div class="ci-info">
+          <b>${escapeHTML(item.nome)}</b>
+          <small>${escapeHTML(item.marca)}</small>
+          <span class="ci-price">${brl(item.preco)}</span>
+        </div>
+        <button class="ci-remove" data-wl-rm="${idx}">remover</button>
+      </div>`
+    )
+    .join("");
+  box.querySelectorAll("[data-wl-rm]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const removed = state.wishlist.splice(+b.dataset.wlRm, 1)[0];
+      saveWishlist();
+      renderWishlist();
+      if (removed) syncWishIcons(removed.id);
+    })
+  );
+}
+
 /* ---------- Sacola ---------- */
 function saveCart() {
   localStorage.setItem("vv_cart", JSON.stringify(state.cart));
   updateCartBadge();
+  syncToServer();
 }
 function updateCartBadge() {
   const n = state.cart.reduce((s, i) => s + i.qty, 0);
@@ -872,6 +1046,29 @@ function bindEvents() {
   });
   $("btnCheckoutWa").addEventListener("click", checkoutWa);
 
+  // Sheet — botão de desejos
+  $("btnSheetWish").addEventListener("click", () => {
+    if (state.current) toggleWishlist(state.current);
+  });
+
+  // Lista de desejos
+  $("wishlistToggle").addEventListener("click", () => {
+    renderWishlist();
+    openOverlay("wishlistOverlay");
+  });
+  $("wishlistClose").addEventListener("click", () => closeOverlay("wishlistOverlay"));
+  $("wishlistOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "wishlistOverlay") closeOverlay("wishlistOverlay");
+  });
+  $("btnClearWishlist").addEventListener("click", () => {
+    if (!state.wishlist.length) return;
+    const ids = state.wishlist.map((i) => i.id);
+    state.wishlist.length = 0;
+    saveWishlist();
+    renderWishlist();
+    ids.forEach(syncWishIcons);
+  });
+
   // Autenticação / Menu
   $("userAvatarBtn").addEventListener("click", toggleUserMenu);
   $("btnLogout").addEventListener("click", handleLogout);
@@ -912,6 +1109,7 @@ function bindEvents() {
     if (e.key === "Escape") {
       closeOverlay("sheetOverlay");
       closeOverlay("cartOverlay");
+      closeOverlay("wishlistOverlay");
       closeOverlay("ordersOverlay");
       closeOverlay("profileOverlay");
       $("userDropdown").hidden = true;

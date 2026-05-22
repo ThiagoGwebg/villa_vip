@@ -15,8 +15,10 @@ require('dotenv').config();
 const express = require("express");
 const path = require("path");
 const fs = require("fs");
+const multer = require("multer");
 const authRoutes = require("./routes/auth");
 const orderRoutes = require("./routes/orders");
+const userDataRoutes = require("./routes/userData");
 const authMiddleware = require("./middlewares/authMiddleware");
 const adminMiddleware = require("./middlewares/adminMiddleware");
 
@@ -37,6 +39,26 @@ function loadJSON(file) {
   return parsed;
 }
 
+/** Grava products.json e invalida o cache. */
+function saveProducts(data) {
+  fs.writeFileSync(path.join(DATA_DIR, "products.json"), JSON.stringify(data, null, 2), "utf-8");
+  delete cache["products.json"];
+}
+
+/** Upload de imagens de produto — salvo em public/assets/products/. */
+const imgUpload = multer({
+  storage: multer.diskStorage({
+    destination: path.join(PUBLIC_DIR, "assets", "products"),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
+      cb(null, Date.now() + "-" + Math.random().toString(36).slice(2, 7) + ext);
+    },
+  }),
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) =>
+    cb(null, ["image/jpeg", "image/png", "image/webp"].includes(file.mimetype)),
+});
+
 /** Normaliza texto para busca (sem acento, minúsculo). */
 function normalize(str) {
   return String(str || "")
@@ -49,6 +71,7 @@ function normalize(str) {
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/user-data', userDataRoutes);
 
 // Compressão leve via headers + cache de assets estáticos (catálogo "leve e rápido")
 app.use(
@@ -307,9 +330,92 @@ app.get("/api/analytics", authMiddleware, adminMiddleware, (_req, res) => {
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
+/* -----------------------------------------------------------------------
+   Upload de imagem de produto — salva arquivo e devolve a URL pública.
+----------------------------------------------------------------------- */
+app.post("/api/admin/upload", authMiddleware, adminMiddleware, imgUpload.single("imagem"), (req, res) => {
+  if (!req.file) return res.status(400).json({ message: "Arquivo inválido ou maior que 8 MB." });
+  res.json({ url: "/assets/products/" + req.file.filename });
+});
+
+/* -----------------------------------------------------------------------
+   CRUD de produtos — protegido por sessão válida + perfil admin.
+   Todas as rotas exigem Bearer token e coluna admin=true no Supabase.
+----------------------------------------------------------------------- */
+
+app.get("/api/admin/products", authMiddleware, adminMiddleware, (_req, res) => {
+  res.json(loadJSON("products.json"));
+});
+
+app.post("/api/admin/products", authMiddleware, adminMiddleware, (req, res) => {
+  const produtos = loadJSON("products.json");
+  const p = req.body;
+  if (!p.id || !p.nome || !p.categoria || !p.marca || p.preco == null) {
+    return res.status(400).json({ message: "Campos obrigatórios: id, nome, categoria, marca, preco" });
+  }
+  if (produtos.find((x) => x.id === String(p.id).trim())) {
+    return res.status(409).json({ message: "Já existe um produto com esse ID." });
+  }
+  const novo = {
+    id: String(p.id).trim(),
+    nome: String(p.nome).trim(),
+    categoria: String(p.categoria).trim(),
+    marca: String(p.marca).trim(),
+    preco: Number(p.preco),
+    precoDe: p.precoDe ? Number(p.precoDe) : null,
+    descricao: String(p.descricao || "").trim(),
+    tamanhos: Array.isArray(p.tamanhos) ? p.tamanhos.map(String) : [],
+    tag: p.tag || null,
+    destaque: Boolean(p.destaque),
+    imagem: p.imagem ? String(p.imagem).trim() : null,
+  };
+  produtos.push(novo);
+  saveProducts(produtos);
+  res.status(201).json(novo);
+});
+
+app.put("/api/admin/products/:id", authMiddleware, adminMiddleware, (req, res) => {
+  const produtos = loadJSON("products.json");
+  const idx = produtos.findIndex((x) => x.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ message: "Produto não encontrado." });
+  const p = req.body;
+  if (!p.nome || !p.categoria || !p.marca || p.preco == null) {
+    return res.status(400).json({ message: "Campos obrigatórios: nome, categoria, marca, preco" });
+  }
+  produtos[idx] = {
+    id: produtos[idx].id,
+    nome: String(p.nome).trim(),
+    categoria: String(p.categoria).trim(),
+    marca: String(p.marca).trim(),
+    preco: Number(p.preco),
+    precoDe: p.precoDe ? Number(p.precoDe) : null,
+    descricao: String(p.descricao || "").trim(),
+    tamanhos: Array.isArray(p.tamanhos) ? p.tamanhos.map(String) : [],
+    tag: p.tag || null,
+    destaque: Boolean(p.destaque),
+    imagem: p.imagem ? String(p.imagem).trim() : null,
+  };
+  saveProducts(produtos);
+  res.json(produtos[idx]);
+});
+
+app.delete("/api/admin/products/:id", authMiddleware, adminMiddleware, (req, res) => {
+  const produtos = loadJSON("products.json");
+  const idx = produtos.findIndex((x) => x.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ message: "Produto não encontrado." });
+  const [removed] = produtos.splice(idx, 1);
+  saveProducts(produtos);
+  res.json({ ok: true, removed });
+});
+
 // Painel administrativo (BI) — protegido por login no front (padrão do projeto).
 app.get(["/admin", "/dashboard"], (_req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, "admin.html"));
+});
+
+// Editor de produtos — mesma proteção client-side do painel BI.
+app.get(["/admin/produtos", "/editor-produtos"], (_req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, "products-admin.html"));
 });
 
 // SPA fallback — qualquer rota não-API entrega o catálogo
