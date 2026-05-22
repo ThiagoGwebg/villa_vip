@@ -735,12 +735,14 @@ function buyNow() {
 
 /* ---------- Sync sacola/favoritos com servidor ---------- */
 async function loadFromServer() {
-  if (!state.user) return;
+  if (!state.user) { console.log("[VV] loadFromServer: pulou (sem usuário)"); return; }
   try {
+    console.log("[VV] loadFromServer: buscando dados do usuário", state.user.id);
     const res = await authFetch("/api/user-data");
     if (!res) { console.error("[VV] loadFromServer: sessão inválida ou sem token"); return; }
     if (!res.ok) { console.error("[VV] loadFromServer: erro HTTP", res.status, await res.text()); return; }
     const data = await res.json();
+    console.log("[VV] loadFromServer: recebeu", JSON.stringify(data));
     state.cart = Array.isArray(data.cart) ? data.cart : [];
     state.wishlist = Array.isArray(data.wishlist) ? data.wishlist : [];
     localStorage.setItem("vv_cart", JSON.stringify(state.cart));
@@ -755,11 +757,14 @@ async function loadFromServer() {
 async function syncToServer() {
   if (!state.user) return;
   try {
+    console.log("[VV] syncToServer: salvando", state.cart.length, "itens na sacola,", state.wishlist.length, "favoritos");
     const res = await authFetch("/api/user-data", {
       method: "PUT",
       body: JSON.stringify({ cart: state.cart, wishlist: state.wishlist }),
     });
-    if (res && !res.ok) console.error("[VV] syncToServer: erro HTTP", res.status, await res.text());
+    if (!res) { console.error("[VV] syncToServer: sem resposta (token inválido?)"); return; }
+    if (!res.ok) { console.error("[VV] syncToServer: erro HTTP", res.status, await res.text()); return; }
+    console.log("[VV] syncToServer: OK");
   } catch (err) {
     console.error("[VV] syncToServer exception:", err);
   }

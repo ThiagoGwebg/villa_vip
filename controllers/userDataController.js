@@ -1,15 +1,19 @@
 const supabase = require('../config/supabase');
 
 const getUserData = async (req, res) => {
+  console.log('[getUserData] user_id:', req.user.id);
+
   const { data, error } = await supabase
     .from('user_data')
     .select('cart, wishlist')
     .eq('user_id', req.user.id)
     .single();
 
+  console.log('[getUserData] data:', JSON.stringify(data));
+  console.log('[getUserData] error:', JSON.stringify(error));
+
   if (error && error.code !== 'PGRST116') {
-    console.error('getUserData error:', error);
-    return res.status(500).json({ message: 'Erro ao buscar dados do usuário' });
+    return res.status(500).json({ message: error.message, code: error.code });
   }
 
   res.json({ cart: data?.cart ?? [], wishlist: data?.wishlist ?? [] });
@@ -17,20 +21,31 @@ const getUserData = async (req, res) => {
 
 const saveUserData = async (req, res) => {
   const { cart, wishlist } = req.body;
+  const userId = req.user.id;
+  const cartData = Array.isArray(cart) ? cart : [];
+  const wishlistData = Array.isArray(wishlist) ? wishlist : [];
 
-  const { error } = await supabase
+  // Verifica se já existe registro para esse usuário
+  const { data: existing } = await supabase
     .from('user_data')
-    .upsert(
-      {
-        user_id: req.user.id,
-        cart: Array.isArray(cart) ? cart : [],
-        wishlist: Array.isArray(wishlist) ? wishlist : [],
-      },
-      { onConflict: 'user_id' }
-    );
+    .select('user_id')
+    .eq('user_id', userId)
+    .single();
+
+  let error;
+  if (existing) {
+    ({ error } = await supabase
+      .from('user_data')
+      .update({ cart: cartData, wishlist: wishlistData })
+      .eq('user_id', userId));
+  } else {
+    ({ error } = await supabase
+      .from('user_data')
+      .insert({ user_id: userId, cart: cartData, wishlist: wishlistData }));
+  }
 
   if (error) {
-    console.error('saveUserData error:', error);
+    console.error('saveUserData error:', JSON.stringify(error));
     return res.status(500).json({ message: error.message, code: error.code });
   }
 
