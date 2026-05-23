@@ -1,69 +1,55 @@
-
 /**
  * Catálogo Web Dinâmico — Villa Vip Country Store
  * Backend full-stack em Node.js (Express). Sync Services.
  *
- * - Serve a vitrine estática (public/)
- * - API REST de catálogo com filtro por categoria, marca e busca textual
+ * - Serve a vitrine estática (public/) — apenas em dev local
+ * - API REST de catálogo (Supabase) com filtro por categoria, marca e busca textual
  * - Endpoint de metadados da loja (WhatsApp, marcas, categorias)
  *
- * O "gancho de conversão" (link dinâmico do WhatsApp) é montado no front,
- * mas o número e o template ficam centralizados aqui via /api/store.
+ * Persistência: Supabase (Postgres + Storage). Produção: serverless na Vercel.
  */
 
 require('dotenv').config();
-const express = require("express");
-const path = require("path");
-const fs = require("fs");
-const multer = require("multer");
-const authRoutes = require("./routes/auth");
-const orderRoutes = require("./routes/orders");
-const userDataRoutes = require("./routes/userData");
-const authMiddleware = require("./middlewares/authMiddleware");
-const adminMiddleware = require("./middlewares/adminMiddleware");
+const express = require('express');
+const path = require('path');
+const multer = require('multer');
+
+// require() do JSON garante que o arquivo é incluído pelo bundler da Vercel.
+const storeData = require('./data/store.json');
+
+const authRoutes = require('./routes/auth');
+const orderRoutes = require('./routes/orders');
+const userDataRoutes = require('./routes/userData');
+const authMiddleware = require('./middlewares/authMiddleware');
+const adminMiddleware = require('./middlewares/adminMiddleware');
+const products = require('./services/productsService');
+const { uploadProductImage } = require('./services/storageService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || "0.0.0.0";
+const HOST = process.env.HOST || '0.0.0.0';
+const IS_SERVERLESS = !!process.env.VERCEL;
 
-const DATA_DIR = path.join(__dirname, "data");
-const PUBLIC_DIR = path.join(__dirname, "public");
+const PUBLIC_DIR = path.join(__dirname, 'public');
 
-/** Lê um JSON do diretório /data com cache simples em memória. */
-const cache = {};
-function loadJSON(file) {
-  if (cache[file]) return cache[file];
-  const raw = fs.readFileSync(path.join(DATA_DIR, file), "utf-8");
-  const parsed = JSON.parse(raw);
-  cache[file] = parsed;
-  return parsed;
+/** store.json é read-only e raramente muda — já carregado via require(). */
+function loadStore() {
+  return storeData;
 }
 
-/** Grava products.json e invalida o cache. */
-function saveProducts(data) {
-  fs.writeFileSync(path.join(DATA_DIR, "products.json"), JSON.stringify(data, null, 2), "utf-8");
-  delete cache["products.json"];
-}
-
-/** Upload de imagens de produto — salvo em public/assets/products/. */
+/** Upload em memória — escrita em disco não funciona em serverless. */
 const imgUpload = multer({
-  storage: multer.diskStorage({
-    destination: path.join(PUBLIC_DIR, "assets", "products"),
-    filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
-      cb(null, Date.now() + "-" + Math.random().toString(36).slice(2, 7) + ext);
-    },
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: 8 * 1024 * 1024 },
   fileFilter: (_req, file, cb) =>
-    cb(null, ["image/jpeg", "image/png", "image/webp"].includes(file.mimetype)),
+    cb(null, ['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)),
 });
 
 /** Normaliza texto para busca (sem acento, minúsculo). */
 function normalize(str) {
-  return String(str || "")
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
+  return String(str || '')
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
     .toLowerCase()
     .trim();
 }
@@ -73,23 +59,24 @@ app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/user-data', userDataRoutes);
 
-// Compressão leve via headers + cache de assets estáticos (catálogo "leve e rápido")
-app.use(
-  express.static(PUBLIC_DIR, {
-    // Sem cache durante a fase de demo/iteração (evita CSS/JS preso no navegador).
-    // Em produção, trocar para maxAge: "1h".
-    maxAge: 0,
-    etag: true,
-    setHeaders(res) {
-      res.setHeader("X-Powered-By", "Sync Services");
-      res.setHeader("Cache-Control", "no-cache");
-    },
-  })
-);
+// Em produção (Vercel), os assets de public/ são entregues pela CDN — não
+// passam por aqui. Em dev local, o Express serve.
+if (!IS_SERVERLESS) {
+  app.use(
+    express.static(PUBLIC_DIR, {
+      maxAge: 0,
+      etag: true,
+      setHeaders(res) {
+        res.setHeader('X-Powered-By', 'Sync Services');
+        res.setHeader('Cache-Control', 'no-cache');
+      },
+    })
+  );
+}
 
 /** Metadados da loja: consumidos pelo front para montar o link do WhatsApp. */
-app.get("/api/store", (_req, res) => {
-  res.json(loadJSON("store.json"));
+app.get('/api/store', (_req, res) => {
+  res.json(loadStore());
 });
 
 /**
@@ -99,74 +86,80 @@ app.get("/api/store", (_req, res) => {
  *   ?q=texana
  *   ?ordenar=preco-asc|preco-desc|destaque
  */
-app.get("/api/products", (req, res) => {
-  let produtos = loadJSON("products.json");
-  const { categoria, marca, q, ordenar } = req.query;
+app.get('/api/products', async (req, res) => {
+  try {
+    let produtos = await products.listAll();
+    const { categoria, marca, q, ordenar } = req.query;
 
-  if (categoria && categoria !== "todos") {
-    produtos = produtos.filter((p) => p.categoria === categoria);
-  }
-
-  if (marca) {
-    const marcas = String(marca)
-      .split(",")
-      .map((m) => normalize(m))
-      .filter(Boolean);
-    if (marcas.length) {
-      produtos = produtos.filter((p) => marcas.includes(normalize(p.marca)));
+    if (categoria && categoria !== 'todos') {
+      produtos = produtos.filter((p) => p.categoria === categoria);
     }
-  }
 
-  if (q) {
-    const termo = normalize(q);
-    produtos = produtos.filter(
-      (p) =>
-        normalize(p.nome).includes(termo) ||
-        normalize(p.marca).includes(termo) ||
-        normalize(p.descricao).includes(termo)
-    );
-  }
+    if (marca) {
+      const marcas = String(marca)
+        .split(',')
+        .map((m) => normalize(m))
+        .filter(Boolean);
+      if (marcas.length) {
+        produtos = produtos.filter((p) => marcas.includes(normalize(p.marca)));
+      }
+    }
 
-  switch (ordenar) {
-    case "preco-asc":
-      produtos = [...produtos].sort((a, b) => a.preco - b.preco);
-      break;
-    case "preco-desc":
-      produtos = [...produtos].sort((a, b) => b.preco - a.preco);
-      break;
-    case "destaque":
-      produtos = [...produtos].sort(
-        (a, b) => Number(b.destaque) - Number(a.destaque)
+    if (q) {
+      const termo = normalize(q);
+      produtos = produtos.filter(
+        (p) =>
+          normalize(p.nome).includes(termo) ||
+          normalize(p.marca).includes(termo) ||
+          normalize(p.descricao).includes(termo)
       );
-      break;
-  }
+    }
 
-  res.json({ total: produtos.length, produtos });
+    switch (ordenar) {
+      case 'preco-asc':
+        produtos.sort((a, b) => a.preco - b.preco);
+        break;
+      case 'preco-desc':
+        produtos.sort((a, b) => b.preco - a.preco);
+        break;
+      case 'destaque':
+        produtos.sort((a, b) => Number(b.destaque) - Number(a.destaque));
+        break;
+    }
+
+    res.json({ total: produtos.length, produtos });
+  } catch (err) {
+    console.error('[products] list error:', err);
+    res.status(500).json({ message: 'Erro ao listar produtos' });
+  }
 });
 
 /** Produto único por ID (página de detalhe / deep-link). */
-app.get("/api/products/:id", (req, res) => {
-  const produto = loadJSON("products.json").find(
-    (p) => p.id.toLowerCase() === String(req.params.id).toLowerCase()
-  );
-  if (!produto) return res.status(404).json({ erro: "Produto não encontrado" });
-  res.json(produto);
+app.get('/api/products/:id', async (req, res) => {
+  try {
+    const produto = await products.getById(req.params.id);
+    if (!produto) return res.status(404).json({ erro: 'Produto não encontrado' });
+    res.json(produto);
+  } catch (err) {
+    console.error('[products] get error:', err);
+    res.status(500).json({ message: 'Erro ao buscar produto' });
+  }
 });
 
 /**
  * Business Intelligence do catálogo.
  *
- * 100% derivado de products.json + store.json — nada simulado. Toda a
- * matemática vive aqui (fonte única de verdade) e o front só renderiza.
+ * 100% derivado de products + store.json — nada simulado. Toda a matemática
+ * vive aqui (fonte única de verdade) e o front só renderiza.
  */
-function buildAnalytics() {
-  const produtos = loadJSON("products.json");
-  const store = loadJSON("store.json");
+async function buildAnalytics() {
+  const produtos = await products.listAll();
+  const store = loadStore();
 
   // id -> nome amigável da categoria ("todos" é filtro de UI, não categoria real).
   const catNome = {};
   for (const c of store.categorias || []) {
-    if (c.id !== "todos") catNome[c.id] = c.nome;
+    if (c.id !== 'todos') catNome[c.id] = c.nome;
   }
 
   const round = (n) => Math.round(n * 100) / 100;
@@ -183,7 +176,6 @@ function buildAnalytics() {
     0
   );
 
-  // Agrupamento genérico por chave.
   const agrupar = (chave) => {
     const m = new Map();
     for (const p of produtos) {
@@ -222,31 +214,28 @@ function buildAnalytics() {
     }))
     .sort((a, b) => b.qtd - a.qtd);
 
-  // Histograma de preços (faixas fixas em BRL).
   const faixasDef = [
-    [0, 100, "Até R$ 100"],
-    [100, 200, "R$ 100–200"],
-    [200, 300, "R$ 200–300"],
-    [300, 400, "R$ 300–400"],
-    [400, 600, "R$ 400–600"],
-    [600, Infinity, "R$ 600+"],
+    [0, 100, 'Até R$ 100'],
+    [100, 200, 'R$ 100–200'],
+    [200, 300, 'R$ 200–300'],
+    [300, 400, 'R$ 300–400'],
+    [400, 600, 'R$ 400–600'],
+    [600, Infinity, 'R$ 600+'],
   ];
   const faixasPreco = faixasDef.map(([min, max, label]) => ({
     label,
     qtd: produtos.filter((p) => p.preco >= min && p.preco < max).length,
   }));
 
-  // Distribuição por tag de merchandising.
   const tagMap = new Map();
   for (const p of produtos) {
-    const t = p.tag || "Sem etiqueta";
+    const t = p.tag || 'Sem etiqueta';
     tagMap.set(t, (tagMap.get(t) || 0) + 1);
   }
   const tags = [...tagMap.entries()]
     .map(([tag, qtd]) => ({ tag, qtd }))
     .sort((a, b) => b.qtd - a.qtd);
 
-  // Matriz marca × categoria (contagem) para heatmap.
   const categoriasMatriz = porCategoria.map((c) => ({ id: c.id, nome: c.nome }));
   const marcasMatriz = porMarca.map((m) => m.marca);
   const grid = marcasMatriz.map((marca) =>
@@ -296,20 +285,26 @@ function buildAnalytics() {
       totalProdutos: produtos.length,
       totalCategorias: porCategoria.length,
       totalMarcas: porMarca.length,
-      precoMedio: round(precos.reduce((s, n) => s + n, 0) / precos.length),
-      precoMin: Math.min(...precos),
-      precoMax: Math.max(...precos),
+      precoMedio: produtos.length
+        ? round(precos.reduce((s, n) => s + n, 0) / precos.length)
+        : 0,
+      precoMin: precos.length ? Math.min(...precos) : 0,
+      precoMax: precos.length ? Math.max(...precos) : 0,
       valorCatalogo: round(precos.reduce((s, n) => s + n, 0)),
       emPromocao: promo.length,
-      pctPromocao: round((promo.length / produtos.length) * 100),
+      pctPromocao: produtos.length
+        ? round((promo.length / produtos.length) * 100)
+        : 0,
       descontoMedioPct: round(descontoMedio),
       economiaTotal: round(economiaTotal),
       emDestaque: produtos.filter((p) => p.destaque).length,
-      pctDestaque: round(
-        (produtos.filter((p) => p.destaque).length / produtos.length) * 100
-      ),
+      pctDestaque: produtos.length
+        ? round(
+            (produtos.filter((p) => p.destaque).length / produtos.length) * 100
+          )
+        : 0,
       variacoesTamanho: totalTamanhos,
-      mediaTamanhos: round(totalTamanhos / produtos.length),
+      mediaTamanhos: produtos.length ? round(totalTamanhos / produtos.length) : 0,
     },
     porCategoria,
     porMarca,
@@ -322,110 +317,129 @@ function buildAnalytics() {
   };
 }
 
-// Protegido: sessão Supabase válida (authMiddleware) + e-mail na allowlist
-// de administradores (adminMiddleware). Bearer token no header Authorization.
-app.get("/api/analytics", authMiddleware, adminMiddleware, (_req, res) => {
-  res.json(buildAnalytics());
+// Protegido: sessão Supabase válida (authMiddleware) + admin (adminMiddleware).
+app.get('/api/analytics', authMiddleware, adminMiddleware, async (_req, res) => {
+  try {
+    res.json(await buildAnalytics());
+  } catch (err) {
+    console.error('[analytics] error:', err);
+    res.status(500).json({ message: 'Erro ao gerar analytics' });
+  }
 });
 
-app.get("/api/health", (_req, res) => res.json({ ok: true }));
+app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
 /* -----------------------------------------------------------------------
-   Upload de imagem de produto — salva arquivo e devolve a URL pública.
+   Upload de imagem de produto — Supabase Storage.
 ----------------------------------------------------------------------- */
-app.post("/api/admin/upload", authMiddleware, adminMiddleware, imgUpload.single("imagem"), (req, res) => {
-  if (!req.file) return res.status(400).json({ message: "Arquivo inválido ou maior que 8 MB." });
-  res.json({ url: "/assets/products/" + req.file.filename });
-});
+app.post(
+  '/api/admin/upload',
+  authMiddleware,
+  adminMiddleware,
+  imgUpload.single('imagem'),
+  async (req, res) => {
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ message: 'Arquivo inválido ou maior que 8 MB.' });
+    }
+    try {
+      const url = await uploadProductImage(req.file);
+      res.json({ url });
+    } catch (err) {
+      console.error('[upload] error:', err);
+      res.status(500).json({ message: 'Falha ao enviar imagem.' });
+    }
+  }
+);
 
 /* -----------------------------------------------------------------------
-   CRUD de produtos — protegido por sessão válida + perfil admin.
-   Todas as rotas exigem Bearer token e coluna admin=true no Supabase.
+   CRUD de produtos — sessão válida + perfil admin.
 ----------------------------------------------------------------------- */
-
-app.get("/api/admin/products", authMiddleware, adminMiddleware, (_req, res) => {
-  res.json(loadJSON("products.json"));
+app.get('/api/admin/products', authMiddleware, adminMiddleware, async (_req, res) => {
+  try {
+    res.json(await products.listAll());
+  } catch (err) {
+    console.error('[admin/products] list error:', err);
+    res.status(500).json({ message: 'Erro ao listar produtos' });
+  }
 });
 
-app.post("/api/admin/products", authMiddleware, adminMiddleware, (req, res) => {
-  const produtos = loadJSON("products.json");
+app.post('/api/admin/products', authMiddleware, adminMiddleware, async (req, res) => {
   const p = req.body;
   if (!p.id || !p.nome || !p.categoria || !p.marca || p.preco == null) {
-    return res.status(400).json({ message: "Campos obrigatórios: id, nome, categoria, marca, preco" });
+    return res
+      .status(400)
+      .json({ message: 'Campos obrigatórios: id, nome, categoria, marca, preco' });
   }
-  if (produtos.find((x) => x.id === String(p.id).trim())) {
-    return res.status(409).json({ message: "Já existe um produto com esse ID." });
+  try {
+    if (await products.exists(String(p.id).trim())) {
+      return res.status(409).json({ message: 'Já existe um produto com esse ID.' });
+    }
+    const novo = await products.create(p);
+    res.status(201).json(novo);
+  } catch (err) {
+    console.error('[admin/products] create error:', err);
+    res.status(500).json({ message: 'Erro ao criar produto' });
   }
-  const novo = {
-    id: String(p.id).trim(),
-    nome: String(p.nome).trim(),
-    categoria: String(p.categoria).trim(),
-    marca: String(p.marca).trim(),
-    preco: Number(p.preco),
-    precoDe: p.precoDe ? Number(p.precoDe) : null,
-    descricao: String(p.descricao || "").trim(),
-    tamanhos: Array.isArray(p.tamanhos) ? p.tamanhos.map(String) : [],
-    tag: p.tag || null,
-    destaque: Boolean(p.destaque),
-    imagem: p.imagem ? String(p.imagem).trim() : null,
-  };
-  produtos.push(novo);
-  saveProducts(produtos);
-  res.status(201).json(novo);
 });
 
-app.put("/api/admin/products/:id", authMiddleware, adminMiddleware, (req, res) => {
-  const produtos = loadJSON("products.json");
-  const idx = produtos.findIndex((x) => x.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ message: "Produto não encontrado." });
+app.put('/api/admin/products/:id', authMiddleware, adminMiddleware, async (req, res) => {
   const p = req.body;
   if (!p.nome || !p.categoria || !p.marca || p.preco == null) {
-    return res.status(400).json({ message: "Campos obrigatórios: nome, categoria, marca, preco" });
+    return res
+      .status(400)
+      .json({ message: 'Campos obrigatórios: nome, categoria, marca, preco' });
   }
-  produtos[idx] = {
-    id: produtos[idx].id,
-    nome: String(p.nome).trim(),
-    categoria: String(p.categoria).trim(),
-    marca: String(p.marca).trim(),
-    preco: Number(p.preco),
-    precoDe: p.precoDe ? Number(p.precoDe) : null,
-    descricao: String(p.descricao || "").trim(),
-    tamanhos: Array.isArray(p.tamanhos) ? p.tamanhos.map(String) : [],
-    tag: p.tag || null,
-    destaque: Boolean(p.destaque),
-    imagem: p.imagem ? String(p.imagem).trim() : null,
-  };
-  saveProducts(produtos);
-  res.json(produtos[idx]);
+  try {
+    const atualizado = await products.update(req.params.id, p);
+    if (!atualizado) return res.status(404).json({ message: 'Produto não encontrado.' });
+    res.json(atualizado);
+  } catch (err) {
+    console.error('[admin/products] update error:', err);
+    res.status(500).json({ message: 'Erro ao atualizar produto' });
+  }
 });
 
-app.delete("/api/admin/products/:id", authMiddleware, adminMiddleware, (req, res) => {
-  const produtos = loadJSON("products.json");
-  const idx = produtos.findIndex((x) => x.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ message: "Produto não encontrado." });
-  const [removed] = produtos.splice(idx, 1);
-  saveProducts(produtos);
-  res.json({ ok: true, removed });
+app.delete('/api/admin/products/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const removido = await products.remove(req.params.id);
+    if (!removido) return res.status(404).json({ message: 'Produto não encontrado.' });
+    res.json({ ok: true, removed: removido });
+  } catch (err) {
+    console.error('[admin/products] delete error:', err);
+    res.status(500).json({ message: 'Erro ao remover produto' });
+  }
 });
 
-// Painel administrativo (BI) — protegido por login no front (padrão do projeto).
-app.get(["/admin", "/dashboard"], (_req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, "admin.html"));
-});
+/* -----------------------------------------------------------------------
+   Rotas HTML — apenas em dev local. Em produção, a Vercel resolve via
+   vercel.json (rewrites) entregando o HTML direto da CDN.
+----------------------------------------------------------------------- */
+if (!IS_SERVERLESS) {
+  app.get(['/admin', '/dashboard'], (_req, res) => {
+    res.sendFile(path.join(PUBLIC_DIR, 'admin.html'));
+  });
 
-// Editor de produtos — mesma proteção client-side do painel BI.
-app.get(["/admin/produtos", "/editor-produtos"], (_req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, "products-admin.html"));
-});
+  app.get(['/admin/produtos', '/editor-produtos'], (_req, res) => {
+    res.sendFile(path.join(PUBLIC_DIR, 'products-admin.html'));
+  });
 
-// SPA fallback — qualquer rota não-API entrega o catálogo
-app.get("*", (_req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, "index.html"));
-});
+  // SPA fallback — qualquer rota não-API entrega o catálogo.
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+  });
+}
 
-app.listen(PORT, HOST, () => {
-  console.log(
-    `\n  🤠  Catálogo Villa Vip rodando em  http://localhost:${PORT}\n` +
-    `      (desenvolvido pela Sync Services)\n`
-  );
-});
+// Listener apenas quando rodado diretamente (npm start / npm run dev).
+// Em serverless, o handler exporta o `app`.
+if (require.main === module) {
+  app.listen(PORT, HOST, () => {
+    console.log(
+      `\n  🤠  Catálogo Villa Vip rodando em  http://localhost:${PORT}\n` +
+        `      (desenvolvido pela Sync Services)\n`
+    );
+  });
+}
+
+module.exports = app;
