@@ -23,6 +23,20 @@
   --wood-grain: repeating-linear-gradient(90deg,
       rgba(0, 0, 0, .16) 0 2px, rgba(255, 255, 255, .018) 2px 4px,
       transparent 4px 92px, rgba(0, 0, 0, .14) 92px 94px);
+
+  /* Fluid Spacing & Typography */
+  --space-xs: clamp(8px, 2vw, 12px);
+  --space-sm: clamp(12px, 3vw, 18px);
+  --space-md: clamp(18px, 4vw, 24px);
+  --space-lg: clamp(24px, 6vw, 42px);
+  --space-xl: clamp(42px, 8vw, 64px);
+
+  --font-xs: clamp(10px, 2vw, 12px);
+  --font-sm: clamp(12px, 2.5vw, 14px);
+  --font-base: clamp(14px, 3vw, 16px);
+  --font-md: clamp(16px, 3.5vw, 20px);
+  --font-lg: clamp(20px, 4.5vw, 28px);
+  --font-xl: clamp(28px, 7vw, 46px);
 }
 
 * {
@@ -101,19 +115,19 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 12px;
-  padding-bottom: 12px;
+  padding-top: var(--space-xs);
+  padding-bottom: var(--space-xs);
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 11px
+  gap: var(--space-xs)
 }
 
 .brand-mark {
   display: block;
-  width: 46px;
+  width: clamp(38px, 5vw, 52px);
   color: var(--orange);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .5))
 }
@@ -125,7 +139,7 @@ select {
 }
 
 .brand-mark.sm {
-  width: 38px
+  width: clamp(32px, 4vw, 42px)
 }
 
 .brand-words {
@@ -137,7 +151,7 @@ select {
 .brand-name {
   font-family: "Anton", sans-serif;
   color: #fff;
-  font-size: 26px;
+  font-size: clamp(20px, 4vw, 30px);
   letter-spacing: .06em;
 }
 
@@ -145,7 +159,7 @@ select {
   font-family: "Oswald", sans-serif;
   font-weight: 600;
   color: var(--orange);
-  font-size: 11px;
+  font-size: clamp(9px, 1.5vw, 11px);
   letter-spacing: .34em;
   text-transform: uppercase;
   margin-top: 3px;
@@ -163,12 +177,13 @@ select {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 6px
+  gap: clamp(4px, 1vw, 8px)
 }
 
 .icon-btn {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  /* Improved touch target */
+  height: 44px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -183,8 +198,8 @@ select {
 }
 
 .ico {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -194,14 +209,14 @@ select {
 
 .cart-count {
   position: absolute;
-  top: 3px;
-  right: 2px;
+  top: 4px;
+  right: 4px;
   min-width: 18px;
   height: 18px;
   background: var(--orange);
   color: #fff;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   display: grid;
   place-items: center;
@@ -211,18 +226,19 @@ select {
 
 .searchbar {
   background: var(--wood-850);
-  padding: 12px 0;
+  padding: var(--space-sm) 0;
   border-top: 1px solid rgba(255, 255, 255, .06)
 }
 
 .searchbar input {
   width: 100%;
-  padding: 12px 16px;
-  border-radius: 4px;
+  padding: 14px 18px;
+  border-radius: var(--radius);
   border: 1px solid rgba(255, 255, 255, .14);
   background: rgba(255, 255, 255, .06);
   color: #fff;
   outline: none;
+  font-size: var(--font-base);
 }
 
 .searchbar input::placeholder {
@@ -244,7 +260,7 @@ select {
   background-position: center;
   color: #fff;
   text-align: center;
-  padding: 36px 0 40px;
+  padding: var(--space-lg) 0 var(--space-lg);
   border-bottom: 3px solid var(--orange);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
 }
@@ -253,7 +269,7 @@ select {
   font-family: "Oswald", sans-serif;
   text-transform: uppercase;
   letter-spacing: .28em;
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--orange);
   font-weight: 600;
 }
@@ -261,9 +277,9 @@ select {
 .hero-title {
   font-family: "Anton", sans-serif;
   font-weight: 400;
-  font-size: clamp(28px, 7vw, 46px);
+  font-size: var(--font-xl);
   line-height: 1.05;
-  margin: 12px 0 10px;
+  margin: var(--space-xs) 0 var(--space-xs);
   letter-spacing: .01em;
 }
 
@@ -273,9 +289,10 @@ select {
 
 .hero-sub {
   color: #e3d6c3;
-  max-width: 560px;
+  max-width: 600px;
   margin: 0 auto;
-  font-size: 15px
+  font-size: var(--font-base);
+  padding: 0 18px;
 }
 
 .hero-steps {
@@ -283,9 +300,9 @@ select {
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 20px;
-  font-size: 13px;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  font-size: var(--font-sm);
   color: #d8c9b2;
 }
 
@@ -297,8 +314,8 @@ select {
 }
 
 .hero-steps b {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: var(--orange);
   color: #fff;
@@ -316,14 +333,14 @@ select {
 
 /* ---------------- CATÁLOGO ---------------- */
 .catalog {
-  padding: 22px 18px 60px
+  padding: var(--space-md) 18px var(--space-xl)
 }
 
 .categories {
   display: flex;
-  gap: 9px;
+  gap: var(--space-xs);
   overflow-x: auto;
-  padding-bottom: 8px;
+  padding-bottom: 12px;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   margin: 0 -18px;
@@ -339,24 +356,26 @@ select {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 9px 16px;
-  border-radius: 6px;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: var(--radius);
   background: var(--card);
   border: 1px solid var(--line);
   color: var(--ink);
   font-family: "Oswald", sans-serif;
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--font-sm);
   text-transform: uppercase;
   letter-spacing: .04em;
   white-space: nowrap;
   transition: all .15s;
+  min-height: 44px;
+  /* Touch target */
 }
 
 .cat-pill svg {
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
@@ -379,8 +398,8 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-top: 18px;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
   flex-wrap: wrap;
 }
 
@@ -391,14 +410,17 @@ select {
 }
 
 .brand-chip {
-  padding: 6px 13px;
+  padding: 8px 14px;
   border-radius: 4px;
   background: transparent;
   border: 1px solid var(--line);
-  font-size: 13px;
+  font-size: var(--font-sm);
   font-weight: 500;
   color: var(--ink-soft);
   transition: all .15s;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
 }
 
 .brand-chip:hover {
@@ -413,14 +435,15 @@ select {
 }
 
 .sort select {
-  padding: 8px 12px;
+  padding: 10px 14px;
   border-radius: 4px;
   border: 1px solid var(--line);
   background: var(--card);
   color: var(--ink);
-  font-size: 13px;
+  font-size: var(--font-sm);
   font-weight: 500;
   outline: none;
+  min-height: 44px;
 }
 
 .sort select:focus {
@@ -431,23 +454,24 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 16px 2px 14px;
-  font-size: 13px;
+  margin: var(--space-sm) 2px var(--space-sm);
+  font-size: var(--font-sm);
   color: var(--ink-soft);
 }
 
 .link-btn {
   color: var(--orange);
   font-weight: 600;
-  font-size: 13px;
-  text-decoration: underline
+  font-size: var(--font-sm);
+  text-decoration: underline;
+  padding: 8px 0;
 }
 
 /* ---------------- GRID DE PRODUTOS ---------------- */
 .grid {
   display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+  grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 45vw, 260px), 1fr));
 }
 
 .card {
@@ -477,18 +501,23 @@ select {
   z-index: 1;
   display: none;
 }
+
 .card-media.has-img .card-img,
-.sheet-media.has-img .sheet-img { display: block; }
+.sheet-media.has-img .sheet-img {
+  display: block;
+}
 
 .card-media.has-img .wm,
 .card-media.has-img .cat-ico,
 .sheet-media.has-img .wm,
-.sheet-media.has-img .cat-ico { display: none; }
+.sheet-media.has-img .cat-ico {
+  display: none;
+}
 
 .card-media.has-img .m-brand,
 .sheet-media.has-img .m-brand {
   z-index: 2;
-  background: rgba(0,0,0,.48);
+  background: rgba(0, 0, 0, .48);
   padding: 2px 9px;
   border-radius: 3px;
   backdrop-filter: blur(4px);
@@ -1360,7 +1389,8 @@ select {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: none; /* Hide on very small screens, show on md */
+  display: none;
+  /* Hide on very small screens, show on md */
 }
 
 @media (min-width: 600px) {
@@ -1389,6 +1419,7 @@ select {
     opacity: 0;
     transform: scale(0.95) translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -1776,10 +1807,12 @@ select {
     font-size: clamp(18px, 5.6vw, 22px);
     gap: 6px;
   }
+
   .insta .sec-head h2 svg {
     width: 22px;
     height: 22px;
   }
+
   .btn-insta {
     padding: 8px 14px;
   }
@@ -1790,6 +1823,7 @@ select {
   .insta-embeds {
     gap: 20px;
   }
+
   .insta-embeds .instagram-media {
     flex-basis: calc((100% - 20px) / 2);
     max-width: calc((100% - 20px) / 2) !important;
@@ -1801,6 +1835,7 @@ select {
   .insta-embeds {
     gap: 24px;
   }
+
   .insta-embeds .instagram-media {
     flex-basis: calc((100% - 48px) / 3);
     max-width: calc((100% - 48px) / 3) !important;
