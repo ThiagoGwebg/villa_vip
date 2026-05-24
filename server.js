@@ -27,6 +27,7 @@ const adminVendasRoutes = require('./routes/adminVendasPresenciais');
 const adminReportsRoutes = require('./routes/adminReports');
 const adminAuditRoutes = require('./routes/adminAudit');
 const adminAlertsRoutes = require('./routes/adminAlerts');
+const adminUsersRoutes = require('./routes/adminUsers');
 const storesService = require('./services/storesService');
 const estoqueService = require('./services/estoqueService');
 const vendasService = require('./services/vendasPresenciaisService');
@@ -84,6 +85,7 @@ app.use('/api/admin/vendas-presenciais', adminVendasRoutes);
 app.use('/api/admin/reports', adminReportsRoutes);
 app.use('/api/admin/audit', adminAuditRoutes);
 app.use('/api/admin/alerts', adminAlertsRoutes);
+app.use('/api/admin/users', adminUsersRoutes);
 
 // Em produção (Vercel) os assets passam por aqui também — vercel.json
 // roteia todas as requisições para esta função; o Cache-Control abaixo
@@ -523,6 +525,10 @@ app.get(['/admin/loja', '/admin/loja/:tab'], (_req, res) => {
 
 app.get(['/admin/auditoria'], (_req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'auditoria-admin.html'));
+});
+
+app.get(['/admin/equipe'], (_req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'equipe-admin.html'));
 });
 
 // SPA fallback — qualquer rota não-API entrega o catálogo.
