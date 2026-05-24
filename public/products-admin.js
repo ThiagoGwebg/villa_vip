@@ -498,6 +498,12 @@ $("formOverlay").addEventListener("click", (e) => {
   if (e.target.id === "formOverlay") closeOverlay("formOverlay");
 });
 
+if ($("btnExport")) {
+  $("btnExport").addEventListener("click", () =>
+    VV.downloadFile("/api/admin/reports/produtos.csv")
+  );
+}
+
 $("searchInput").addEventListener("input", (e) => {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => {

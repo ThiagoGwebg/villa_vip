@@ -3,6 +3,7 @@ const router = express.Router();
 const authMiddleware = require('../middlewares/authMiddleware');
 const adminMiddleware = require('../middlewares/adminMiddleware');
 const { writeLimiter } = require('../middlewares/rateLimits');
+const auditAction = require('../middlewares/auditMiddleware');
 const estoque = require('../services/estoqueService');
 
 router.use(authMiddleware, adminMiddleware);
@@ -28,7 +29,10 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.patch('/:product_id', writeLimiter, async (req, res) => {
+router.patch('/:product_id', writeLimiter,
+  auditAction('estoque.update', 'estoque', (req) =>
+    `${req.body?.store_id || '?'}:${req.params.product_id}`),
+  async (req, res) => {
   const { store_id, quantidade, minimo } = req.body || {};
   if (!store_id) return res.status(400).json({ message: 'store_id é obrigatório.' });
   try {

@@ -150,4 +150,4 @@ async function remove(id) {
   return data ? DB_TO_API(data) : null;
 }
 
-module.exports = { listAll, getById, exists, create, update, remove };
+module.exports = { listAll, listPaginated, getById, exists, create, update, remove };

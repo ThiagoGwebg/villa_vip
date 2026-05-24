@@ -24,6 +24,9 @@ const adminOrdersRoutes = require('./routes/adminOrders');
 const adminStoresRoutes = require('./routes/adminStores');
 const adminEstoqueRoutes = require('./routes/adminEstoque');
 const adminVendasRoutes = require('./routes/adminVendasPresenciais');
+const adminReportsRoutes = require('./routes/adminReports');
+const adminAuditRoutes = require('./routes/adminAudit');
+const adminAlertsRoutes = require('./routes/adminAlerts');
 const storesService = require('./services/storesService');
 const estoqueService = require('./services/estoqueService');
 const vendasService = require('./services/vendasPresenciaisService');
@@ -35,6 +38,7 @@ const {
   uploadLimiter,
   analyticsLimiter,
 } = require('./middlewares/rateLimits');
+const auditAction = require('./middlewares/auditMiddleware');
 const products = require('./services/productsService');
 const { uploadProductImage } = require('./services/storageService');
 
@@ -77,6 +81,9 @@ app.use('/api/admin/orders', adminOrdersRoutes);
 app.use('/api/admin/stores', adminStoresRoutes);
 app.use('/api/admin/estoque', adminEstoqueRoutes);
 app.use('/api/admin/vendas-presenciais', adminVendasRoutes);
+app.use('/api/admin/reports', adminReportsRoutes);
+app.use('/api/admin/audit', adminAuditRoutes);
+app.use('/api/admin/alerts', adminAlertsRoutes);
 
 // Em produção (Vercel) os assets passam por aqui também — vercel.json
 // roteia todas as requisições para esta função; o Cache-Control abaixo
@@ -398,6 +405,7 @@ app.post(
   authMiddleware,
   adminMiddleware,
   uploadLimiter,
+  auditAction('product.image_upload', 'product_image', () => null),
   imgUpload.single('imagem'),
   async (req, res) => {
     if (!req.file) {
@@ -440,7 +448,9 @@ app.get('/api/admin/products', authMiddleware, adminMiddleware, async (req, res)
   }
 });
 
-app.post('/api/admin/products', authMiddleware, adminMiddleware, writeLimiter, async (req, res) => {
+app.post('/api/admin/products', authMiddleware, adminMiddleware, writeLimiter,
+  auditAction('product.create', 'product', (req) => req.body?.id),
+  async (req, res) => {
   const p = req.body;
   if (!p.id || !p.nome || !p.categoria || !p.marca || p.preco == null) {
     return res
@@ -459,7 +469,9 @@ app.post('/api/admin/products', authMiddleware, adminMiddleware, writeLimiter, a
   }
 });
 
-app.put('/api/admin/products/:id', authMiddleware, adminMiddleware, writeLimiter, async (req, res) => {
+app.put('/api/admin/products/:id', authMiddleware, adminMiddleware, writeLimiter,
+  auditAction('product.update', 'product'),
+  async (req, res) => {
   const p = req.body;
   if (!p.nome || !p.categoria || !p.marca || p.preco == null) {
     return res
@@ -476,7 +488,9 @@ app.put('/api/admin/products/:id', authMiddleware, adminMiddleware, writeLimiter
   }
 });
 
-app.delete('/api/admin/products/:id', authMiddleware, adminMiddleware, writeLimiter, async (req, res) => {
+app.delete('/api/admin/products/:id', authMiddleware, adminMiddleware, writeLimiter,
+  auditAction('product.delete', 'product'),
+  async (req, res) => {
   try {
     const removido = await products.remove(req.params.id);
     if (!removido) return res.status(404).json({ message: 'Produto não encontrado.' });
@@ -505,6 +519,10 @@ app.get(['/admin/pedidos'], (_req, res) => {
 
 app.get(['/admin/loja', '/admin/loja/:tab'], (_req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'loja-admin.html'));
+});
+
+app.get(['/admin/auditoria'], (_req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'auditoria-admin.html'));
 });
 
 // SPA fallback — qualquer rota não-API entrega o catálogo.

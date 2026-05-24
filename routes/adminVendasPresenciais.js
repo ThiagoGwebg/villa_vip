@@ -3,6 +3,7 @@ const router = express.Router();
 const authMiddleware = require('../middlewares/authMiddleware');
 const adminMiddleware = require('../middlewares/adminMiddleware');
 const { writeLimiter } = require('../middlewares/rateLimits');
+const auditAction = require('../middlewares/auditMiddleware');
 const vendas = require('../services/vendasPresenciaisService');
 
 router.use(authMiddleware, adminMiddleware);
@@ -40,7 +41,9 @@ router.get('/summary', async (req, res) => {
   }
 });
 
-router.post('/', writeLimiter, async (req, res) => {
+router.post('/', writeLimiter,
+  auditAction('venda_presencial.create', 'venda_presencial', () => null),
+  async (req, res) => {
   try {
     const venda = await vendas.create(req.body || {}, req.user);
     res.status(201).json(venda);

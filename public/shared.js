@@ -190,6 +190,38 @@
     }
   };
 
+  /* ---------- Download de arquivo autenticado --------------------------
+     fetch() não permite headers customizados em <a download>, então
+     baixamos como Blob e simulamos o clique. Mostra toast em erro.
+     ------------------------------------------------------------------- */
+  VV.downloadFile = async (url, fallbackName = 'download') => {
+    try {
+      const res = await fetch(url, {
+        headers: { Authorization: 'Bearer ' + (VV.token() || '') },
+      });
+      if (res.status === 401) { VV.logout(); return; }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        VV.toast(data.message || 'Erro ao gerar arquivo.', { kind: 'error' });
+        return;
+      }
+      // Nome do arquivo: tenta Content-Disposition, senão fallback.
+      const dispo = res.headers.get('Content-Disposition') || '';
+      const match = dispo.match(/filename="?([^";]+)"?/i);
+      const name = match ? match[1] : fallbackName;
+      const blob = await res.blob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    } catch {
+      VV.toast('Falha na conexão.', { kind: 'error' });
+    }
+  };
+
   /* ---------- Helpers internos ---------------------------------------- */
   function escapeHtml(str) {
     return String(str ?? "").replace(/[&<>"']/g, (c) => ({

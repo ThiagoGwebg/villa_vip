@@ -999,6 +999,7 @@
   max-width: 620px;
   max-height: 90vh;
   overflow-y: auto;
+  overflow-x: hidden;     /* nunca permite scroll horizontal no modal */
 }
 
 .pe-modal--sm { max-width: 420px; }
@@ -1052,6 +1053,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;          /* permite que tabelas/grids filhas se ajustem */
 }
 
 .pe-row {
@@ -1549,6 +1551,116 @@
   gap: 12px;
   padding: 20px 22px 22px;
   border-bottom: 1px solid rgba(255, 255, 255, .06);
+  position: relative;
+}
+
+/* ---------- Sino de alertas ----------------------------------------- */
+.vv-bell {
+  position: relative;
+  margin-left: auto;
+  width: 34px;
+  height: 34px;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 3px;
+  color: #c9b89a;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s ease, color .15s ease;
+}
+.vv-bell:hover { background: rgba(226, 100, 28, .12); color: #fff; }
+.vv-bell.has-alerts { color: #fff; }
+.vv-bell svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+.vv-bell-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--ds-discount, #b23b2e);
+  color: #fff;
+  font: 700 10px/18px "Oswald", sans-serif;
+  text-align: center;
+  letter-spacing: .04em;
+}
+.vv-bell-panel {
+  position: absolute;
+  top: 64px;
+  right: 14px;
+  width: 320px;
+  max-height: 480px;
+  background: #1f160d;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 4px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .45);
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  animation: vv-fade-in .12s ease;
+}
+.vv-bell-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+.vv-bell-panel h3 {
+  margin: 0;
+  font: 600 12px/1 "Oswald", sans-serif;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: #f4ede0;
+}
+.vv-bell-action {
+  background: transparent;
+  border: none;
+  color: #c9962b;
+  font: 500 10px/1 "Oswald", sans-serif;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.vv-bell-action:hover { color: #fff; text-decoration: underline; }
+.vv-bell-panel ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+.vv-bell-panel li {
+  border-bottom: 1px solid rgba(255, 255, 255, .04);
+}
+.vv-bell-panel li.is-read { opacity: .55; }
+.vv-bell-empty {
+  padding: 18px;
+  font-size: 12px;
+  color: #9a8567;
+  text-align: center;
+}
+.vv-bell-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 12px 16px;
+  cursor: pointer;
+  color: #f4ede0;
+  font-family: "Inter", sans-serif;
+}
+.vv-bell-item:hover { background: rgba(226, 100, 28, .08); }
+.vv-bell-item strong { display: block; font-size: 12px; letter-spacing: .04em; }
+.vv-bell-item span { display: block; font-size: 11px; color: #c9b89a; margin-top: 2px; word-break: break-word; }
+.vv-bell-item small { display: block; font-size: 10px; color: #6f5c40; margin-top: 4px; letter-spacing: .08em; }
+
+@media (max-width: 1080px) {
+  .vv-bell-panel { left: 14px; right: 14px; width: auto; }
 }
 .vv-side-longhorn {
   width: 34px;
@@ -1711,6 +1823,449 @@
   .vv-with-side .dash-top-wrap { padding-left: 64px; }
 }
 
+/* ---------- Diff JSON (auditoria) ------------------------------------ */
+.vv-diff {
+  background: var(--ds-surface-2);
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-r);
+  padding: 12px 14px;
+  font: 12px/1.45 "JetBrains Mono", Consolas, ui-monospace, monospace;
+  color: var(--ds-ink);
+  margin: 6px 0 0;
+  max-height: 260px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ---------- Tabs (loja-admin) ---------------------------------------- */
+.vv-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--ds-line);
+  margin: 8px 0 24px;
+}
+.vv-tab {
+  background: transparent;
+  border: none;
+  font: 600 12px/1 "Oswald", sans-serif;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ds-muted);
+  padding: 14px 18px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease;
+}
+.vv-tab:hover { color: var(--ds-ink); }
+.vv-tab.is-active { color: var(--ds-orange-deep); border-bottom-color: var(--ds-orange); }
+.vv-tab-panel { animation: vv-fade-in .2s ease; }
+
+/* ---------- Editor de horário ---------------------------------------- */
+.vv-hours {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 8px;
+}
+.vv-hour-day {
+  background: var(--ds-surface-2);
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-r);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.vv-hour-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.vv-hour-h strong {
+  font: 600 12px/1 "Oswald", sans-serif;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ds-ink);
+}
+.vv-hour-h small {
+  font-size: 10px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ds-discount);
+}
+.vv-hour-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.vv-hour-row input[type="time"] {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-r);
+  background: var(--ds-surface);
+  font-family: "Inter", sans-serif;
+}
+
+/* ---------- Input inline em tabelas ---------------------------------- */
+.vv-inline-input {
+  width: 80px;
+  padding: 6px 8px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-r);
+  background: var(--ds-surface);
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  text-align: right;
+}
+.vv-inline-input:focus { outline: 2px solid var(--ds-orange); outline-offset: -1px; }
+
+/* ---------- Autocomplete de produto (modal venda) -------------------- */
+.vv-autocomplete {
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-r);
+  margin-top: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(27, 18, 9, .08);
+}
+.vv-ac-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--ds-line);
+  font-family: "Inter", sans-serif;
+}
+.vv-ac-item:last-child { border-bottom: none; }
+.vv-ac-item:hover { background: rgba(226, 100, 28, .06); }
+.vv-ac-name { font-size: 13px; color: var(--ds-ink); font-weight: 500; }
+.vv-ac-meta { font-size: 11px; color: var(--ds-muted); }
+.vv-ac-empty { padding: 12px 14px; font-size: 12px; color: var(--ds-muted); }
+
+/* ---------- Tabela de itens do modal "Nova venda" ------------------- */
+/* Override da .pe-table global — dentro do modal, a tabela tem que caber
+   na largura do modal sem forçar scroll horizontal. */
+#vendaItensTable.pe-table {
+  min-width: 0;
+  width: 100%;
+}
+#vendaItensTable th,
+#vendaItensTable td {
+  padding: 10px 6px;
+  font-size: 12px;
+  vertical-align: middle;
+}
+#vendaItensTable td:first-child { padding-left: 12px; }
+#vendaItensTable td:last-child  { padding-right: 12px; }
+
+/* Inputs/selects dentro da tabela ocupam a largura da coluna */
+#vendaItensTable .vv-inline-input,
+#vendaItensTable select {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 6px;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+#vendaItensTable select {
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-r);
+  background: var(--ds-surface);
+  color: var(--ds-ink);
+  font-family: "Inter", sans-serif;
+}
+
+/* Coluna do nome do produto: trunca elegantemente */
+#vendaItensTable .t-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* Botão remover (×) — compacto */
+#vendaItensTable .pe-act.del {
+  padding: 4px 10px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Mobile: esconde "Tam." e "Subtotal" (são derivados/secundários);
+   o usuário ainda vê o total no rodapé do modal. */
+@media (max-width: 560px) {
+  #vendaItensTable thead th:nth-child(2),
+  #vendaItensTable tbody td:nth-child(2),
+  #vendaItensTable thead th:nth-child(5),
+  #vendaItensTable tbody td:nth-child(5) { display: none; }
+}
+
+/* ---------- Totais do modal de venda --------------------------------- */
+.vv-venda-total {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-right: 16px;
+  align-items: flex-end;
+}
+.vv-venda-total > div {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--ds-muted);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.vv-venda-total strong {
+  font-family: "Anton", sans-serif;
+  font-size: 18px;
+  letter-spacing: .03em;
+  color: var(--ds-ink);
+}
+.vv-venda-total > div:last-child strong { color: var(--ds-orange-deep); font-size: 22px; }
+
+/* ---------- Card "Loja Física" --------------------------------------- */
+.store-card { padding: 24px; }
+.store-card-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 38%) 1fr;
+  gap: 28px;
+}
+.store-fachada-wrap { display: flex; flex-direction: column; gap: 14px; }
+.store-fachada {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--ds-r);
+  border: 1px solid var(--ds-line);
+  background: var(--ds-surface-2);
+  display: block;
+}
+.store-fachada--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--ds-muted);
+  font-size: 12px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.store-fachada--placeholder svg {
+  width: 32px;
+  height: 32px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+.store-id h2 {
+  font-family: "Anton", sans-serif;
+  font-size: 22px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin: 4px 0 4px;
+}
+.store-id p {
+  color: var(--ds-muted);
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+.store-pill {
+  display: inline-block;
+  font: 600 10px/1 "Oswald", sans-serif;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+}
+.store-pill.is-open    { background: rgba(58,154,92,.10); border-color: rgba(58,154,92,.3); color: #2e7d50; }
+.store-pill.is-closed  { background: rgba(178,59,46,.08); border-color: rgba(178,59,46,.3); color: #8a2b22; }
+.store-links { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.store-stats { display: flex; flex-direction: column; gap: 20px; }
+.store-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.store-kpi {
+  background: var(--ds-surface-2);
+  border: 1px solid var(--ds-line);
+  border-left: 2px solid var(--ds-orange);
+  border-radius: var(--ds-r);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.store-kpi--ruptura { border-left-color: var(--ds-discount); }
+.store-kpi-label {
+  font: 600 10px/1 "Oswald", sans-serif;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ds-muted);
+}
+.store-kpi strong {
+  font-family: "Anton", sans-serif;
+  font-size: 22px;
+  letter-spacing: .03em;
+  color: var(--ds-ink);
+}
+.store-kpi small { font-size: 11px; color: var(--ds-muted); }
+.store-kpi small a { color: var(--ds-orange-deep); text-decoration: none; font-weight: 600; }
+.store-kpi small a:hover { text-decoration: underline; }
+
+.store-bottom {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 1fr;
+  gap: 24px;
+  padding-top: 6px;
+  border-top: 1px solid var(--ds-line);
+}
+.store-h {
+  display: block;
+  font: 600 11px/1 "Oswald", sans-serif;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ds-muted);
+  margin: 10px 0 12px;
+}
+
+.store-mix-row { display: flex; align-items: center; gap: 18px; }
+.store-donut {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  position: relative;
+  flex: none;
+}
+.store-donut::after {
+  content: "";
+  position: absolute;
+  inset: 22px;
+  background: var(--ds-surface);
+  border-radius: 50%;
+}
+.store-donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  text-align: center;
+}
+.store-donut-center b {
+  font-family: "Anton", sans-serif;
+  font-size: 14px;
+  letter-spacing: .02em;
+  color: var(--ds-ink);
+  line-height: 1;
+}
+.store-donut-center small {
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ds-muted);
+  margin-top: 4px;
+}
+.store-mix-legend {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.store-mix-legend li {
+  display: grid;
+  grid-template-columns: 12px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--ds-ink);
+}
+.store-mix-legend b {
+  font-family: "Inter", sans-serif;
+  color: var(--ds-muted);
+  font-weight: 600;
+}
+.store-mix-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.store-mix-empty { color: var(--ds-muted); font-size: 12px; }
+
+.store-top {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  counter-reset: storetop;
+}
+.store-top li {
+  counter-increment: storetop;
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--ds-surface-2);
+  border-radius: var(--ds-r);
+  font-size: 12px;
+}
+.store-top li::before {
+  content: counter(storetop);
+  font: 700 11px/1 "Oswald", sans-serif;
+  color: var(--ds-orange);
+  letter-spacing: .12em;
+}
+.store-top-nome { color: var(--ds-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.store-top-qty { font-family: "Anton", sans-serif; font-size: 16px; color: var(--ds-ink); }
+.store-top-qty small {
+  font: 500 10px/1 "Oswald", sans-serif;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ds-muted);
+  margin-left: 4px;
+}
+.store-empty {
+  font-size: 12px;
+  color: var(--ds-muted);
+  padding: 14px;
+  border: 1px dashed var(--ds-line-strong);
+  border-radius: var(--ds-r);
+  text-align: center;
+}
+.store-empty a { color: var(--ds-orange-deep); text-decoration: none; font-weight: 600; }
+.store-empty a:hover { text-decoration: underline; }
+
+@media (max-width: 1080px) {
+  .store-card-grid { grid-template-columns: 1fr; }
+  .store-bottom    { grid-template-columns: 1fr; }
+  .store-kpi-row   { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .store-mix-row   { flex-direction: column; align-items: stretch; }
+  .store-donut     { margin: 0 auto; }
+}
+
 /* ---------- Status badges (pedidos) ---------------------------------- */
 .vv-status {
   display: inline-block;
@@ -1773,4 +2328,105 @@
 @media (prefers-reduced-motion: reduce) {
   .is-busy::after { animation: none; border-right-color: currentColor; opacity: .5; }
   .vv-toast { transition: none; }
+}
+
+/* ============================================================================
+   Responsividade — desktops com sidebar
+   A sidebar fixa de 240px (.vv-with-side) tira espaço útil. Em 1366 sobram
+   ~1126px, em 1440 sobram ~1200px. Os layouts originais foram pensados pra
+   ≥1600px. Os blocos abaixo aliviam essa faixa "desktop apertado".
+   ========================================================================== */
+
+/* --- Desktop pequeno / notebook 1440 (~1200px úteis com sidebar) ------- */
+@media (max-width: 1440px) {
+  .dash-top-wrap { padding: 16px 22px; gap: 16px; }
+  .dash-main { padding: 28px 22px 56px; }
+
+  /* Cartas do BI: empilha pares lado-a-lado em vez de 3 colunas */
+  .chart-grid .span-4 { grid-column: span 6; }
+  .chart-grid .span-5,
+  .chart-grid .span-7 { grid-column: span 6; }
+
+  /* Card "Loja Física" — coluna esquerda some, conteúdo vira pilha */
+  .store-card-grid { grid-template-columns: 1fr; }
+  .store-bottom    { grid-template-columns: 1fr; }
+  .store-kpi-row   { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .store-card      { padding: 22px; }
+  .store-kpi       { padding: 12px 14px; }
+  .store-kpi strong { font-size: 20px; }
+  .store-fachada   { aspect-ratio: 16 / 9; }
+
+  /* KPIs do dashboard: mantém 4 cols mas comprime */
+  .kpi-grid { gap: 14px; }
+  .kpi { padding: 22px 18px; gap: 12px; }
+  .kpi b { font-size: 26px; }
+
+  /* Cards: padding menor */
+  .card { padding: 22px; }
+  .card-h { margin-bottom: 22px; }
+
+  /* Topbar: esconde stamp pra liberar espaço dos botões */
+  .dash-stamp { display: none; }
+}
+
+/* --- Notebook 1366 e similares (~1126px úteis com sidebar) ------------- */
+@media (max-width: 1280px) {
+  /* Toda carta vira full-width */
+  .chart-grid .span-4,
+  .chart-grid .span-5,
+  .chart-grid .span-6,
+  .chart-grid .span-7 { grid-column: span 12; }
+
+  /* KPIs: 2 colunas (mesmo padrão de tablet) */
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* Store KPI volta a respirar em 2 cols com mais altura */
+  .store-kpi-row { grid-template-columns: repeat(2, 1fr); }
+
+  /* Topbar: botões só com ícone (esconde label) */
+  .dash-top-actions .dash-btn span { display: none; }
+  .dash-top-actions .dash-btn { padding: 0 11px; }
+
+  /* Página loja-admin select: largura cheia em 1 linha */
+  .pe-toolbar { width: 100%; }
+}
+
+/* --- Mobile largo / tablet portrait (sidebar já é drawer aqui) --------- */
+@media (max-width: 720px) {
+  .store-kpi-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .store-kpi strong { font-size: 22px; }
+  .store-card { padding: 18px; }
+  .store-id h2 { font-size: 18px; }
+  .store-links { flex-direction: column; align-items: stretch; }
+  .store-links .dash-btn { justify-content: center; }
+
+  /* Modal de venda presencial: total não pode estourar */
+  .vv-venda-total { margin-right: 0; width: 100%; align-items: stretch; }
+  .vv-venda-total > div { justify-content: space-between; }
+
+  /* Diff JSON na auditoria: respira melhor */
+  .vv-diff { max-height: 180px; padding: 10px; font-size: 11px; }
+
+  /* Editor de horário: 1 dia por linha (cards maiores) */
+  .vv-hours { grid-template-columns: 1fr; }
+
+  /* Sidebar drawer: ajustar largura do brand */
+  .vv-side { width: min(300px, 88vw); }
+
+  /* Tabs da loja: scroll horizontal em telas estreitas */
+  .vv-tabs { overflow-x: auto; gap: 0; }
+  .vv-tab { flex: none; padding: 14px 14px; font-size: 11px; }
+}
+
+/* --- Mobile estreito (iPhone SE etc.) --------------------------------- */
+@media (max-width: 480px) {
+  .store-kpi-row { grid-template-columns: 1fr; }
+  .store-fachada { aspect-ratio: 16 / 10; }
+  .pe-form { padding: 18px; }
+
+  /* KPI estado vazio em vendas/produtos cabe melhor */
+  .pe-empty { font-size: 12px; padding: 18px 12px; }
+
+  /* Tabela admin: mantém scroll mas remove min-width agressivo */
+  .pe-table { min-width: 720px; }
 }

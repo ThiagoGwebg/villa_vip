@@ -38,6 +38,8 @@ dinâmico do WhatsApp com a mensagem pronta** — o "gancho de conversão" do pr
    - `db/profiles.sql`  (espelho de `auth.users` + flag admin + trigger `handle_new_user`)
    - `db/user_data.sql` (carrinho + wishlist persistidos por usuário)
    - `db/stores.sql`    (lojas físicas, estoque, vendas presenciais + bucket `store-images`)
+   - `db/audit.sql`     (log de auditoria das ações de admin)
+   - `db/alerts.sql`    (alertas operacionais — estoque baixo, pedido parado)
 3. **Storage** → confirme que o bucket `product-images` ficou **público**.
 4. Copie do painel **Project Settings → API**:
    - `Project URL` → `SUPABASE_URL`

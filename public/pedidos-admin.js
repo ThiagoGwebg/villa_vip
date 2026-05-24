@@ -298,6 +298,13 @@ document.addEventListener('keydown', (e) => {
 $('btnLogout').addEventListener('click', () => VV.logout());
 $('btnDenyLogout').addEventListener('click', () => VV.logout());
 $('btnRetry').addEventListener('click', load);
+$('btnExport').addEventListener('click', () => {
+  const params = new URLSearchParams();
+  if (state.status) params.set('status', state.status);
+  if (state.q)      params.set('q', state.q);
+  const qs = params.toString();
+  VV.downloadFile('/api/admin/reports/pedidos.csv' + (qs ? '?' + qs : ''));
+});
 $('btnRefresh').addEventListener('click', (e) => {
   e.currentTarget.classList.add('is-spin');
   load().finally(() =>

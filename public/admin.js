@@ -63,6 +63,9 @@ function setState(s) {
 function render(d) {
   const r = d.resumo;
 
+  // Loja física (Fase 2) — primeiro bloco visual
+  renderStoreCard(d.lojas?.[0]);
+
   // KPIs
   $("kProdutos").textContent = num(r.totalProdutos);
   $("kCategorias").textContent = num(r.totalCategorias);
@@ -156,6 +159,127 @@ function render(d) {
   $("footStamp").textContent =
     `${d.loja} · faixa de preço ${brl(r.precoMin)}–${brl(r.precoMax)} · ` +
     `${num(r.variacoesTamanho)} variações de tamanho`;
+}
+
+/* ---------- Card "Loja Física" --------------------------------------- */
+function renderStoreCard(loja) {
+  if (!loja) { $("storeSection").hidden = true; return; }
+  $("storeSection").hidden = false;
+
+  const v = loja.vendas30d || {};
+  const hoje = v.hoje || { qtd: 0, faturamento: 0 };
+  const top = (loja.topSkus || []).slice(0, 5);
+  const mix = (v.mixPagamento || []);
+  const totalMix = mix.reduce((s, m) => s + m.valor, 0) || 1;
+  const palette = ["#e2641c", "#c9962b", "#9a8367", "#7a5b30", "#b44e10", "#6f5c40"];
+
+  const PAG_LABELS = {
+    dinheiro: "Dinheiro", pix: "PIX", credito: "Crédito",
+    debito: "Débito", crediario: "Crediário", outro: "Outro",
+  };
+
+  const enderecoCompleto = `${loja.enderecoLinha1} · ${loja.cidade}/${loja.uf}`;
+  const statusOpen = loja.status?.open;
+  const statusLabel = loja.status?.label || "—";
+
+  const fachada = loja.fotoFachada
+    ? `<img class="store-fachada" src="${VV.escapeHtml(loja.fotoFachada)}" alt="Fachada da ${VV.escapeHtml(loja.nome)}">`
+    : `<div class="store-fachada store-fachada--placeholder" aria-hidden="true">
+         <svg viewBox="0 0 24 24"><path d="M3 9 12 2l9 7"/><path d="M5 9v11h14V9"/><path d="M9 20v-6h6v6"/></svg>
+         <span>Sem foto da fachada</span>
+       </div>`;
+
+  const whatsappHref = loja.whatsapp
+    ? `https://wa.me/${loja.whatsapp}` : null;
+
+  const topList = top.length ? `
+    <ol class="store-top">
+      ${top.map((t) => `
+        <li>
+          <span class="store-top-nome">${VV.escapeHtml(t.nome || t.productId)}</span>
+          <span class="store-top-qty">${num(t.qty)}<small>un</small></span>
+        </li>`).join("")}
+    </ol>
+  ` : `<p class="store-empty">Sem vendas no balcão nos últimos 30 dias. <a href="/admin/loja">Lançar a primeira →</a></p>`;
+
+  let acc = 0;
+  const donutStops = mix.length
+    ? mix.map((m, i) => {
+        const from = (acc / totalMix) * 360;
+        acc += m.valor;
+        const to = (acc / totalMix) * 360;
+        return `${palette[i % palette.length]} ${from}deg ${to}deg`;
+      }).join(", ")
+    : "var(--ds-line-strong) 0deg 360deg";
+
+  const mixLegend = mix.length
+    ? mix.map((m, i) => `
+        <li>
+          <span class="store-mix-dot" style="background:${palette[i % palette.length]}"></span>
+          <span>${PAG_LABELS[m.pagamento] || m.pagamento}</span>
+          <b>${brl(m.valor)}</b>
+        </li>`).join("")
+    : `<li class="store-mix-empty">Sem vendas registradas</li>`;
+
+  $("storeCard").innerHTML = `
+    <div class="store-card-grid">
+      <div class="store-fachada-wrap">
+        ${fachada}
+        <div class="store-id">
+          <span class="store-pill ${statusOpen ? "is-open" : "is-closed"}">${VV.escapeHtml(statusLabel)}</span>
+          <h2>${VV.escapeHtml(loja.nome)}</h2>
+          <p>${VV.escapeHtml(enderecoCompleto)}</p>
+          <div class="store-links">
+            ${loja.mapsUrl ? `<a class="dash-btn ghost" href="${VV.escapeHtml(loja.mapsUrl)}" target="_blank" rel="noopener">Como chegar</a>` : ""}
+            ${whatsappHref ? `<a class="dash-btn ghost" href="${whatsappHref}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
+            <a class="dash-btn solid" href="/admin/loja">Gerenciar loja</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="store-stats">
+        <div class="store-kpi-row">
+          <div class="store-kpi">
+            <span class="store-kpi-label">Faturamento hoje</span>
+            <strong>${brl(hoje.faturamento)}</strong>
+            <small>${num(hoje.qtd)} venda(s)</small>
+          </div>
+          <div class="store-kpi">
+            <span class="store-kpi-label">Faturamento 30d</span>
+            <strong>${brl(v.faturamento || 0)}</strong>
+            <small>${num(v.qtd || 0)} venda(s)</small>
+          </div>
+          <div class="store-kpi">
+            <span class="store-kpi-label">Ticket médio 30d</span>
+            <strong>${brl(v.ticketMedio || 0)}</strong>
+            <small>presencial</small>
+          </div>
+          <div class="store-kpi store-kpi--ruptura">
+            <span class="store-kpi-label">SKUs em ruptura</span>
+            <strong>${num(loja.rupturaCount || 0)}</strong>
+            <small><a href="/admin/loja">Ver estoque →</a></small>
+          </div>
+        </div>
+
+        <div class="store-bottom">
+          <div class="store-mix">
+            <span class="store-h">Mix de pagamento · 30d</span>
+            <div class="store-mix-row">
+              <div class="store-donut" style="background: conic-gradient(${donutStops});">
+                <div class="store-donut-center"><b>${brl(v.faturamento || 0)}</b><small>total</small></div>
+              </div>
+              <ul class="store-mix-legend">${mixLegend}</ul>
+            </div>
+          </div>
+
+          <div class="store-top-wrap">
+            <span class="store-h">Top SKUs no balcão · 30d</span>
+            ${topList}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 /* ---------- Gráfico de barras horizontais ----------------------------- */

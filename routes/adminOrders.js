@@ -3,6 +3,7 @@ const router = express.Router();
 const authMiddleware = require('../middlewares/authMiddleware');
 const adminMiddleware = require('../middlewares/adminMiddleware');
 const { writeLimiter } = require('../middlewares/rateLimits');
+const auditAction = require('../middlewares/auditMiddleware');
 const {
   listOrders,
   updateStatus,
@@ -39,7 +40,7 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-router.patch('/:id', writeLimiter, async (req, res) => {
+router.patch('/:id', writeLimiter, auditAction('order.status_change', 'order'), async (req, res) => {
   const { status } = req.body || {};
   try {
     const updated = await updateStatus(req.params.id, status);

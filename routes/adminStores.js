@@ -4,6 +4,7 @@ const router = express.Router();
 const authMiddleware = require('../middlewares/authMiddleware');
 const adminMiddleware = require('../middlewares/adminMiddleware');
 const { writeLimiter, uploadLimiter } = require('../middlewares/rateLimits');
+const auditAction = require('../middlewares/auditMiddleware');
 const stores = require('../services/storesService');
 const { uploadStoreImage } = require('../services/storageService');
 
@@ -42,6 +43,7 @@ router.patch(
   authMiddleware,
   adminMiddleware,
   writeLimiter,
+  auditAction('store.update', 'store'),
   async (req, res) => {
     try {
       const loja = await stores.update(req.params.id, req.body || {});

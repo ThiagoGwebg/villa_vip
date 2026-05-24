@@ -17,6 +17,7 @@
     pedidos:   '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 4v4"/><path d="M16 4v4"/>',
     loja:      '<path d="M3 9 12 2l9 7"/><path d="M5 9v11h14V9"/><path d="M9 20v-6h6v6"/>',
     catalogo:  '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+    auditoria: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/>',
     sair:      '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
   };
 
@@ -32,6 +33,13 @@
       items: [
         { key: 'pedidos',  label: 'Pedidos',  href: '/admin/pedidos' },
         { key: 'produtos', label: 'Produtos', href: '/admin/produtos' },
+        { key: 'loja',     label: 'Loja Física', href: '/admin/loja' },
+      ],
+    },
+    {
+      title: 'Governança',
+      items: [
+        { key: 'auditoria', label: 'Auditoria', href: '/admin/auditoria' },
       ],
     },
     {
@@ -74,6 +82,18 @@
             <strong>Villa Vip</strong>
             <small>Admin</small>
           </div>
+          <button type="button" class="vv-bell" id="vv-bell" aria-label="Alertas" title="Alertas">
+            ${svg('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/>')}
+            <span class="vv-bell-badge" id="vv-bell-badge" hidden>0</span>
+          </button>
+        </div>
+
+        <div class="vv-bell-panel" id="vv-bell-panel" hidden>
+          <header>
+            <h3>Alertas</h3>
+            <button type="button" id="vv-bell-mark-all" class="vv-bell-action">Marcar tudo como lido</button>
+          </header>
+          <ul id="vv-bell-list"><li class="vv-bell-empty">Sem alertas pendentes.</li></ul>
         </div>
 
         <nav class="vv-side-nav">${groupsHtml}</nav>
@@ -122,6 +142,99 @@
         VV.logout();
       }
     });
+
+    attachBell();
+  }
+
+  /* ---------- Sino de alertas ---------------------------------------- */
+  const ALERT_LABELS = {
+    'estoque.baixo': 'Estoque baixo',
+    'pedido.parado': 'Pedido sem movimento',
+  };
+  function renderAlertItem(a) {
+    const p = a.payload || {};
+    let msg = ALERT_LABELS[a.kind] || a.kind;
+    if (a.kind === 'estoque.baixo') {
+      msg = `${VV.escapeHtml(p.nome || p.product_id)} · ${p.quantidade} un (mín. ${p.minimo})`;
+    } else if (a.kind === 'pedido.parado') {
+      msg = `Pedido de ${VV.escapeHtml(p.cliente || '—')} parado em "enviado"`;
+    }
+    const when = new Date(a.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    return `
+      <li data-id="${a.id}" class="${a.lido_em ? 'is-read' : ''}">
+        <button type="button" class="vv-bell-item" data-act="open">
+          <strong>${VV.escapeHtml(ALERT_LABELS[a.kind] || a.kind)}</strong>
+          <span>${msg}</span>
+          <small>${when}</small>
+        </button>
+      </li>`;
+  }
+
+  function attachBell() {
+    const bell = document.getElementById('vv-bell');
+    const badge = document.getElementById('vv-bell-badge');
+    const panel = document.getElementById('vv-bell-panel');
+    const list  = document.getElementById('vv-bell-list');
+    const markAll = document.getElementById('vv-bell-mark-all');
+    let unread = 0;
+
+    const refreshCount = async () => {
+      try {
+        const res = await VV.authFetch('/api/admin/alerts/unread-count');
+        if (!res.ok) return;
+        const data = await res.json();
+        unread = data.count || 0;
+        badge.hidden = unread === 0;
+        badge.textContent = unread > 99 ? '99+' : String(unread);
+        bell.classList.toggle('has-alerts', unread > 0);
+      } catch { /* silent */ }
+    };
+
+    const loadList = async () => {
+      list.innerHTML = '<li class="vv-bell-empty">Carregando…</li>';
+      try {
+        const res = await VV.authFetch('/api/admin/alerts?limit=20');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        list.innerHTML = data.items.length
+          ? data.items.map(renderAlertItem).join('')
+          : '<li class="vv-bell-empty">Sem alertas pendentes.</li>';
+      } catch {
+        list.innerHTML = '<li class="vv-bell-empty">Não foi possível carregar.</li>';
+      }
+    };
+
+    bell.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const open = panel.hidden;
+      panel.hidden = !open;
+      if (open) await loadList();
+    });
+    document.addEventListener('click', (e) => {
+      if (!panel.hidden && !panel.contains(e.target) && !bell.contains(e.target)) {
+        panel.hidden = true;
+      }
+    });
+    list.addEventListener('click', async (e) => {
+      const li = e.target.closest('li[data-id]');
+      if (!li) return;
+      try {
+        await VV.authFetch(`/api/admin/alerts/${li.dataset.id}/read`, { method: 'PATCH' });
+        li.classList.add('is-read');
+        await refreshCount();
+      } catch { /* silent */ }
+    });
+    markAll.addEventListener('click', async () => {
+      try {
+        await VV.authFetch('/api/admin/alerts/mark-all-read', { method: 'POST' });
+        await Promise.all([refreshCount(), loadList()]);
+        VV.toast('Alertas marcados como lidos.', { kind: 'success' });
+      } catch { VV.toast('Erro ao marcar.', { kind: 'error' }); }
+    });
+
+    // Boot + polling 60s
+    refreshCount();
+    setInterval(refreshCount, 60_000);
   }
 
   VV.adminShell = {
