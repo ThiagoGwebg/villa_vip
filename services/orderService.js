@@ -43,11 +43,19 @@ async function purgeExpired(db, userId) {
 }
 
 /** Grava um pedido finalizado (snapshot dos itens + total). */
-async function createOrder(token, userId, itens, total) {
+async function createOrder(token, user, itens, total) {
   const db = userClient(token);
+  const nome = user?.user_metadata?.nome
+    || (user?.email ? user.email.split('@')[0] : null);
   const { data, error } = await db
     .from('pedidos')
-    .insert({ user_id: userId, itens, total })
+    .insert({
+      user_id: user.id,
+      user_email: user.email || null,
+      user_nome: nome,
+      itens,
+      total,
+    })
     .select('id, itens, total, status, created_at')
     .single();
 

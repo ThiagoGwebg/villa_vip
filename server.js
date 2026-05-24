@@ -20,8 +20,26 @@ const storeData = require('./data/store.json');
 const authRoutes = require('./routes/auth');
 const orderRoutes = require('./routes/orders');
 const userDataRoutes = require('./routes/userData');
+const adminOrdersRoutes = require('./routes/adminOrders');
+const adminStoresRoutes = require('./routes/adminStores');
+const adminEstoqueRoutes = require('./routes/adminEstoque');
+const adminVendasRoutes = require('./routes/adminVendasPresenciais');
+const adminReportsRoutes = require('./routes/adminReports');
+const adminAuditRoutes = require('./routes/adminAudit');
+const adminAlertsRoutes = require('./routes/adminAlerts');
+const adminUsersRoutes = require('./routes/adminUsers');
+const storesService = require('./services/storesService');
+const estoqueService = require('./services/estoqueService');
+const vendasService = require('./services/vendasPresenciaisService');
 const authMiddleware = require('./middlewares/authMiddleware');
 const adminMiddleware = require('./middlewares/adminMiddleware');
+const {
+  loginLimiter,
+  writeLimiter,
+  uploadLimiter,
+  analyticsLimiter,
+} = require('./middlewares/rateLimits');
+const auditAction = require('./middlewares/auditMiddleware');
 const products = require('./services/productsService');
 const { uploadProductImage } = require('./services/storageService');
 
@@ -55,9 +73,19 @@ function normalize(str) {
 }
 
 app.use(express.json());
-app.use('/api/auth', authRoutes);
+// Confia no proxy da Vercel para que rate-limit veja o IP real do cliente.
+app.set('trust proxy', 1);
+app.use('/api/auth', loginLimiter, authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/user-data', userDataRoutes);
+app.use('/api/admin/orders', adminOrdersRoutes);
+app.use('/api/admin/stores', adminStoresRoutes);
+app.use('/api/admin/estoque', adminEstoqueRoutes);
+app.use('/api/admin/vendas-presenciais', adminVendasRoutes);
+app.use('/api/admin/reports', adminReportsRoutes);
+app.use('/api/admin/audit', adminAuditRoutes);
+app.use('/api/admin/alerts', adminAlertsRoutes);
+app.use('/api/admin/users', adminUsersRoutes);
 
 // Em produção (Vercel) os assets passam por aqui também — vercel.json
 // roteia todas as requisições para esta função; o Cache-Control abaixo
@@ -144,6 +172,46 @@ app.get('/api/products/:id', async (req, res) => {
     res.status(500).json({ message: 'Erro ao buscar produto' });
   }
 });
+
+/**
+ * Bloco "Lojas Físicas" da dashboard.
+ *
+ * Para cada loja ativa, anexa o resumo de vendas presenciais dos últimos
+ * 30 dias, top SKUs, contagem de SKUs em ruptura e flag aberto/fechado.
+ * Falhas individuais (ex.: estoque sem cadastro) são silenciosas para não
+ * derrubar a dashboard inteira.
+ */
+async function buildLojasBlock() {
+  let lojas;
+  try {
+    lojas = await storesService.listAll({ onlyActive: true });
+  } catch (err) {
+    console.error('[analytics/lojas] falhou ao listar lojas:', err);
+    return [];
+  }
+
+  const enriched = await Promise.all(
+    lojas.map(async (loja) => {
+      const safe = (p) => p.catch((err) => {
+        console.error(`[analytics/lojas] ${loja.slug}:`, err);
+        return null;
+      });
+      const [summary, top, ruptura] = await Promise.all([
+        safe(vendasService.summary({ storeId: loja.id, days: 30 })),
+        safe(vendasService.topProducts({ storeId: loja.id, days: 30, limit: 5 })),
+        safe(estoqueService.countLow(loja.id)),
+      ]);
+      return {
+        ...loja,
+        status: storesService.isOpenNow(loja),
+        vendas30d: summary || { qtd: 0, faturamento: 0, ticketMedio: 0, hoje: { qtd: 0, faturamento: 0 }, mixPagamento: [] },
+        topSkus: top || [],
+        rupturaCount: ruptura || 0,
+      };
+    })
+  );
+  return enriched;
+}
 
 /**
  * Business Intelligence do catálogo.
@@ -277,8 +345,11 @@ async function buildAnalytics() {
       tag: p.tag,
     }));
 
+  const lojas = await buildLojasBlock();
+
   return {
     loja: store.nome,
+    lojas,
     geradoEm: new Date().toISOString(),
     resumo: {
       totalProdutos: produtos.length,
@@ -317,7 +388,7 @@ async function buildAnalytics() {
 }
 
 // Protegido: sessão Supabase válida (authMiddleware) + admin (adminMiddleware).
-app.get('/api/analytics', authMiddleware, adminMiddleware, async (_req, res) => {
+app.get('/api/analytics', authMiddleware, adminMiddleware, analyticsLimiter, async (_req, res) => {
   try {
     res.json(await buildAnalytics());
   } catch (err) {
@@ -335,6 +406,8 @@ app.post(
   '/api/admin/upload',
   authMiddleware,
   adminMiddleware,
+  uploadLimiter,
+  auditAction('product.image_upload', 'product_image', () => null),
   imgUpload.single('imagem'),
   async (req, res) => {
     if (!req.file) {
@@ -355,16 +428,31 @@ app.post(
 /* -----------------------------------------------------------------------
    CRUD de produtos — sessão válida + perfil admin.
 ----------------------------------------------------------------------- */
-app.get('/api/admin/products', authMiddleware, adminMiddleware, async (_req, res) => {
+app.get('/api/admin/products', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    res.json(await products.listAll());
+    // Modo legado: sem query (ou ?all=1) devolve tudo — preserva clientes existentes.
+    if (req.query.all === '1' || Object.keys(req.query).length === 0) {
+      return res.json(await products.listAll());
+    }
+    const limit  = Math.min(Math.max(parseInt(req.query.limit, 10)  || 20, 1), 100);
+    const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0);
+    res.json(await products.listPaginated({
+      limit,
+      offset,
+      q: req.query.q,
+      categoria: req.query.categoria,
+      marca: req.query.marca,
+      sort: req.query.sort,
+    }));
   } catch (err) {
     console.error('[admin/products] list error:', err);
     res.status(500).json({ message: 'Erro ao listar produtos' });
   }
 });
 
-app.post('/api/admin/products', authMiddleware, adminMiddleware, async (req, res) => {
+app.post('/api/admin/products', authMiddleware, adminMiddleware, writeLimiter,
+  auditAction('product.create', 'product', (req) => req.body?.id),
+  async (req, res) => {
   const p = req.body;
   if (!p.id || !p.nome || !p.categoria || !p.marca || p.preco == null) {
     return res
@@ -383,7 +471,9 @@ app.post('/api/admin/products', authMiddleware, adminMiddleware, async (req, res
   }
 });
 
-app.put('/api/admin/products/:id', authMiddleware, adminMiddleware, async (req, res) => {
+app.put('/api/admin/products/:id', authMiddleware, adminMiddleware, writeLimiter,
+  auditAction('product.update', 'product'),
+  async (req, res) => {
   const p = req.body;
   if (!p.nome || !p.categoria || !p.marca || p.preco == null) {
     return res
@@ -400,7 +490,9 @@ app.put('/api/admin/products/:id', authMiddleware, adminMiddleware, async (req, 
   }
 });
 
-app.delete('/api/admin/products/:id', authMiddleware, adminMiddleware, async (req, res) => {
+app.delete('/api/admin/products/:id', authMiddleware, adminMiddleware, writeLimiter,
+  auditAction('product.delete', 'product'),
+  async (req, res) => {
   try {
     const removido = await products.remove(req.params.id);
     if (!removido) return res.status(404).json({ message: 'Produto não encontrado.' });
@@ -421,6 +513,22 @@ app.get(['/admin', '/dashboard'], (_req, res) => {
 
 app.get(['/admin/produtos', '/editor-produtos'], (_req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'products-admin.html'));
+});
+
+app.get(['/admin/pedidos'], (_req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'pedidos-admin.html'));
+});
+
+app.get(['/admin/loja', '/admin/loja/:tab'], (_req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'loja-admin.html'));
+});
+
+app.get(['/admin/auditoria'], (_req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'auditoria-admin.html'));
+});
+
+app.get(['/admin/equipe'], (_req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'equipe-admin.html'));
 });
 
 // SPA fallback — qualquer rota não-API entrega o catálogo.

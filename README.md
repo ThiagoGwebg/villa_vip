@@ -33,16 +33,20 @@ dinâmico do WhatsApp com a mensagem pronta** — o "gancho de conversão" do pr
 
 1. Crie o projeto em [supabase.com](https://supabase.com).
 2. **SQL Editor** → cole e execute, na ordem:
-   - `db/products.sql` (tabela de produtos + bucket Storage)
-   - `db/pedidos.sql`  (tabela de pedidos do "Meus Pedidos")
-   - `setup_users.sql`  (tabela `profiles` com flag admin)
+   - `db/products.sql`  (tabela de produtos + bucket Storage + função `set_updated_at`)
+   - `db/pedidos.sql`   (tabela de pedidos do "Meus Pedidos")
+   - `db/profiles.sql`  (espelho de `auth.users` + flag admin + trigger `handle_new_user`)
+   - `db/user_data.sql` (carrinho + wishlist persistidos por usuário)
+   - `db/stores.sql`    (lojas físicas, estoque, vendas presenciais + bucket `store-images`)
+   - `db/audit.sql`     (log de auditoria das ações de admin)
+   - `db/alerts.sql`    (alertas operacionais — estoque baixo, pedido parado)
 3. **Storage** → confirme que o bucket `product-images` ficou **público**.
 4. Copie do painel **Project Settings → API**:
    - `Project URL` → `SUPABASE_URL`
    - `service_role` key → `SUPABASE_KEY`
-5. Cadastre seu próprio e-mail em `profiles` com `admin = true` (SQL Editor):
+5. Após criar sua conta pelo `/register.html`, promova-se a admin no SQL Editor:
    ```sql
-   insert into profiles (email, admin) values ('seu-email@dominio.com', true);
+   update profiles set admin = true where email = 'seu-email@dominio.com';
    ```
 
 ---

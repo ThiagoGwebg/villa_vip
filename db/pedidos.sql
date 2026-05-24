@@ -12,14 +12,30 @@
 create table if not exists public.pedidos (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null references auth.users (id) on delete cascade,
+  user_email  text,                                  -- denormalizado p/ admin
+  user_nome   text,                                  -- denormalizado p/ admin
   itens       jsonb not null,                       -- [{id,nome,marca,size,preco,qty}]
   total       numeric(10,2) not null default 0,
   status      text not null default 'enviado',      -- enviado | em_andamento | concluido | cancelado
   created_at  timestamptz not null default now()
 );
 
+-- Migração defensiva: ambientes pré-existentes ganham as colunas sem perder
+-- dados; backfill abaixo preenche a partir de auth.users.
+alter table public.pedidos add column if not exists user_email text;
+alter table public.pedidos add column if not exists user_nome  text;
+
+update public.pedidos p
+   set user_email = u.email,
+       user_nome  = coalesce(u.raw_user_meta_data->>'nome', split_part(u.email, '@', 1))
+  from auth.users u
+ where p.user_id = u.id
+   and (p.user_email is null or p.user_nome is null);
+
 create index if not exists pedidos_user_created_idx
   on public.pedidos (user_id, created_at desc);
+create index if not exists pedidos_status_created_idx
+  on public.pedidos (status, created_at desc);
 
 -- Row Level Security: cada usuário só enxerga / cria os próprios pedidos.
 -- (O backend valida a sessão no authMiddleware e ainda filtra por user_id;
@@ -40,6 +56,28 @@ drop policy if exists "pedidos: dono apaga" on public.pedidos;
 create policy "pedidos: dono apaga"
   on public.pedidos for delete
   using (auth.uid() = user_id);
+
+-- Admin enxerga TODOS os pedidos e pode atualizar status. A flag vem de
+-- profiles.admin (que tem RLS própria para não vazar quem é admin).
+drop policy if exists "pedidos: admin lê tudo" on public.pedidos;
+create policy "pedidos: admin lê tudo"
+  on public.pedidos for select
+  using (
+    exists (select 1 from public.profiles p
+             where p.id = auth.uid() and p.admin = true)
+  );
+
+drop policy if exists "pedidos: admin atualiza" on public.pedidos;
+create policy "pedidos: admin atualiza"
+  on public.pedidos for update
+  using (
+    exists (select 1 from public.profiles p
+             where p.id = auth.uid() and p.admin = true)
+  )
+  with check (
+    exists (select 1 from public.profiles p
+             where p.id = auth.uid() and p.admin = true)
+  );
 
 -- ----------------------------------------------------------------------------
 --  Expiração automática: apaga pedidos com mais de 30 dias.

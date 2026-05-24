@@ -6,10 +6,10 @@
 
 const $ = (id) => document.getElementById(id);
 
-const brl = (n) =>
-  Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const num = (n) => Number(n).toLocaleString("pt-BR");
-const pct = (n) => `${Number(n).toLocaleString("pt-BR")}%`;
+// Formatters vêm de shared.js (window.VV). Aliases mantêm o restante do arquivo legível.
+const brl = VV.brl;
+const num = VV.num;
+const pct = VV.pct;
 
 /* ---------- Tooltip flutuante compartilhado --------------------------- */
 const tip = $("tip");
@@ -27,61 +27,23 @@ function bindTip(el, html) {
 }
 
 /* ---------- Carga de dados -------------------------------------------- */
-function logout(toLogin) {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-  if (toLogin) window.location.replace("/login.html");
-}
-
-/* ---------- Guarda de acesso -----------------------------------------
-   Cliente comum não vê o painel. Este guard é defesa em profundidade: o
-   gate real continua sendo o 403 de /api/analytics (que lê a coluna
-   `admin` no banco). Aqui só evitamos que um não-admin chegue a ver o
-   esqueleto do painel — sem sessão vai pro login; logado mas sem admin
-   volta pra vitrine, como um cliente normal. */
-function getStoredUser() {
-  try {
-    return JSON.parse(localStorage.getItem("user") || "null");
-  } catch {
-    return null;
-  }
-}
-
-function ensureAdmin() {
-  if (!localStorage.getItem("token")) {
-    window.location.replace("/login.html");
-    return false;
-  }
-  const user = getStoredUser();
-  if (!user || user.isAdmin !== true) {
-    window.location.replace("/");
-    return false;
-  }
-  return true;
-}
-
 async function load() {
   setState("loading");
-  const token = localStorage.getItem("token");
-  if (!token) return logout(true);
   try {
-    const res = await fetch("/api/analytics", {
+    const res = await VV.authFetch("/api/analytics", {
       cache: "no-store",
-      headers: { Authorization: "Bearer " + token },
+      onForbidden: () => {
+        setState("deny");
+        $("stamp").textContent = "Acesso restrito";
+      },
     });
-    // 401: sessão inválida/expirada → encerra e manda relogar.
-    if (res.status === 401) return logout(true);
-    // 403: logado, mas e-mail fora da allowlist de admin → tela de bloqueio.
-    if (res.status === 403) {
-      setState("deny");
-      $("stamp").textContent = "Acesso restrito";
-      return;
-    }
+    if (res.status === 403) return;
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     render(data);
     setState("ready");
   } catch (err) {
+    if (err?.message === "Sessão expirada") return;
     $("errorMsg").textContent =
       "Não foi possível carregar os dados (" + err.message + ").";
     setState("error");
@@ -100,6 +62,9 @@ function setState(s) {
 /* ---------- Render principal ------------------------------------------ */
 function render(d) {
   const r = d.resumo;
+
+  // Loja física (Fase 2) — primeiro bloco visual
+  renderStoreCard(d.lojas?.[0]);
 
   // KPIs
   $("kProdutos").textContent = num(r.totalProdutos);
@@ -194,6 +159,127 @@ function render(d) {
   $("footStamp").textContent =
     `${d.loja} · faixa de preço ${brl(r.precoMin)}–${brl(r.precoMax)} · ` +
     `${num(r.variacoesTamanho)} variações de tamanho`;
+}
+
+/* ---------- Card "Loja Física" --------------------------------------- */
+function renderStoreCard(loja) {
+  if (!loja) { $("storeSection").hidden = true; return; }
+  $("storeSection").hidden = false;
+
+  const v = loja.vendas30d || {};
+  const hoje = v.hoje || { qtd: 0, faturamento: 0 };
+  const top = (loja.topSkus || []).slice(0, 5);
+  const mix = (v.mixPagamento || []);
+  const totalMix = mix.reduce((s, m) => s + m.valor, 0) || 1;
+  const palette = ["#e2641c", "#c9962b", "#9a8367", "#7a5b30", "#b44e10", "#6f5c40"];
+
+  const PAG_LABELS = {
+    dinheiro: "Dinheiro", pix: "PIX", credito: "Crédito",
+    debito: "Débito", crediario: "Crediário", outro: "Outro",
+  };
+
+  const enderecoCompleto = `${loja.enderecoLinha1} · ${loja.cidade}/${loja.uf}`;
+  const statusOpen = loja.status?.open;
+  const statusLabel = loja.status?.label || "—";
+
+  const fachada = loja.fotoFachada
+    ? `<img class="store-fachada" src="${VV.escapeHtml(loja.fotoFachada)}" alt="Fachada da ${VV.escapeHtml(loja.nome)}">`
+    : `<div class="store-fachada store-fachada--placeholder" aria-hidden="true">
+         <svg viewBox="0 0 24 24"><path d="M3 9 12 2l9 7"/><path d="M5 9v11h14V9"/><path d="M9 20v-6h6v6"/></svg>
+         <span>Sem foto da fachada</span>
+       </div>`;
+
+  const whatsappHref = loja.whatsapp
+    ? `https://wa.me/${loja.whatsapp}` : null;
+
+  const topList = top.length ? `
+    <ol class="store-top">
+      ${top.map((t) => `
+        <li>
+          <span class="store-top-nome">${VV.escapeHtml(t.nome || t.productId)}</span>
+          <span class="store-top-qty">${num(t.qty)}<small>un</small></span>
+        </li>`).join("")}
+    </ol>
+  ` : `<p class="store-empty">Sem vendas no balcão nos últimos 30 dias. <a href="/admin/loja">Lançar a primeira →</a></p>`;
+
+  let acc = 0;
+  const donutStops = mix.length
+    ? mix.map((m, i) => {
+        const from = (acc / totalMix) * 360;
+        acc += m.valor;
+        const to = (acc / totalMix) * 360;
+        return `${palette[i % palette.length]} ${from}deg ${to}deg`;
+      }).join(", ")
+    : "var(--ds-line-strong) 0deg 360deg";
+
+  const mixLegend = mix.length
+    ? mix.map((m, i) => `
+        <li>
+          <span class="store-mix-dot" style="background:${palette[i % palette.length]}"></span>
+          <span>${PAG_LABELS[m.pagamento] || m.pagamento}</span>
+          <b>${brl(m.valor)}</b>
+        </li>`).join("")
+    : `<li class="store-mix-empty">Sem vendas registradas</li>`;
+
+  $("storeCard").innerHTML = `
+    <div class="store-card-grid">
+      <div class="store-fachada-wrap">
+        ${fachada}
+        <div class="store-id">
+          <span class="store-pill ${statusOpen ? "is-open" : "is-closed"}">${VV.escapeHtml(statusLabel)}</span>
+          <h2>${VV.escapeHtml(loja.nome)}</h2>
+          <p>${VV.escapeHtml(enderecoCompleto)}</p>
+          <div class="store-links">
+            ${loja.mapsUrl ? `<a class="dash-btn ghost" href="${VV.escapeHtml(loja.mapsUrl)}" target="_blank" rel="noopener">Como chegar</a>` : ""}
+            ${whatsappHref ? `<a class="dash-btn ghost" href="${whatsappHref}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
+            <a class="dash-btn solid" href="/admin/loja">Gerenciar loja</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="store-stats">
+        <div class="store-kpi-row">
+          <div class="store-kpi">
+            <span class="store-kpi-label">Faturamento hoje</span>
+            <strong>${brl(hoje.faturamento)}</strong>
+            <small>${num(hoje.qtd)} venda(s)</small>
+          </div>
+          <div class="store-kpi">
+            <span class="store-kpi-label">Faturamento 30d</span>
+            <strong>${brl(v.faturamento || 0)}</strong>
+            <small>${num(v.qtd || 0)} venda(s)</small>
+          </div>
+          <div class="store-kpi">
+            <span class="store-kpi-label">Ticket médio 30d</span>
+            <strong>${brl(v.ticketMedio || 0)}</strong>
+            <small>presencial</small>
+          </div>
+          <div class="store-kpi store-kpi--ruptura">
+            <span class="store-kpi-label">SKUs em ruptura</span>
+            <strong>${num(loja.rupturaCount || 0)}</strong>
+            <small><a href="/admin/loja">Ver estoque →</a></small>
+          </div>
+        </div>
+
+        <div class="store-bottom">
+          <div class="store-mix">
+            <span class="store-h">Mix de pagamento · 30d</span>
+            <div class="store-mix-row">
+              <div class="store-donut" style="background: conic-gradient(${donutStops});">
+                <div class="store-donut-center"><b>${brl(v.faturamento || 0)}</b><small>total</small></div>
+              </div>
+              <ul class="store-mix-legend">${mixLegend}</ul>
+            </div>
+          </div>
+
+          <div class="store-top-wrap">
+            <span class="store-h">Top SKUs no balcão · 30d</span>
+            ${topList}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 /* ---------- Gráfico de barras horizontais ----------------------------- */
@@ -355,8 +441,8 @@ function tableDestaques(rows) {
 }
 
 /* ---------- Ações ----------------------------------------------------- */
-$("btnLogout").addEventListener("click", () => logout(true));
-$("btnDenyLogout").addEventListener("click", () => logout(true));
+$("btnLogout").addEventListener("click", () => VV.logout());
+$("btnDenyLogout").addEventListener("click", () => VV.logout());
 
 function refresh(btn) {
   btn.classList.add("is-spin");
@@ -368,4 +454,4 @@ $("btnRefresh").addEventListener("click", (e) =>
 );
 $("btnRetry").addEventListener("click", () => load());
 
-if (ensureAdmin()) load();
+if (VV.guard({ requireAdmin: true })) load();

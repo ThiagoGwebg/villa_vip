@@ -174,6 +174,11 @@
         </article>
       </section>
 
+      <!-- Loja física -------------------------------------------------- -->
+      <section class="chart-grid" id="storeSection" hidden>
+        <article class="card span-12 store-card" id="storeCard"></article>
+      </section>
+
       <!-- Charts grid -------------------------------------------------- -->
       <section class="chart-grid">
 
@@ -317,25 +322,21 @@
   <!-- Tooltip flutuante compartilhado -->
   <div class="dash-tip" id="tip" role="tooltip" hidden></div>
 
+  <script src="/shared.js"></script>
+  <script src="/admin-shell.js"></script>
   <script>
-    /* Guarda de acesso — mesmo padrão client-side já usado no projeto. */
-    (function guard() {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        window.location.replace("/login.html");
-        return;
+    // Saudação do header — preenchida cedo para evitar flicker.
+    (function greet() {
+      const u = VV.user();
+      if (u && u.nome) {
+        document.getElementById("userName").textContent = u.nome;
+        document.getElementById("userInitial").textContent =
+          u.nome.trim().charAt(0).toUpperCase() || "V";
       }
-      try {
-        const u = JSON.parse(localStorage.getItem("user") || "null");
-        if (u && u.nome) {
-          document.getElementById("userName").textContent = u.nome;
-          document.getElementById("userInitial").textContent =
-            u.nome.trim().charAt(0).toUpperCase() || "V";
-        }
-      } catch { /* perfil corrompido: segue sem nome */ }
+      VV.adminShell.mount({ active: "dashboard" });
     })();
   </script>
-  <script src="admin.js"></script>
+  <script src="/admin.js"></script>
 </body>
 
 </html>

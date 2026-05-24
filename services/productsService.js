@@ -44,6 +44,51 @@ async function listAll() {
   return (data || []).map(DB_TO_API);
 }
 
+/**
+ * Lista paginada para o admin. Mantém listAll() intacta para a vitrine
+ * pública (precisa de tudo para filtrar/ordenar client-side).
+ */
+async function listPaginated({
+  limit = 20,
+  offset = 0,
+  q,
+  categoria,
+  marca,
+  sort = 'recent',
+} = {}) {
+  let query = supabase
+    .from('products')
+    .select('*', { count: 'exact' });
+
+  if (q && q.trim()) {
+    const term = `%${q.trim()}%`;
+    query = query.or(`id.ilike.${term},nome.ilike.${term},marca.ilike.${term}`);
+  }
+  if (categoria) query = query.eq('categoria', categoria);
+  if (marca)     query = query.eq('marca', marca);
+
+  switch (sort) {
+    case 'preco-asc':  query = query.order('preco', { ascending: true }); break;
+    case 'preco-desc': query = query.order('preco', { ascending: false }); break;
+    case 'nome-asc':   query = query.order('nome',  { ascending: true }); break;
+    case 'destaque':   query = query.order('destaque', { ascending: false })
+                                    .order('created_at', { ascending: false }); break;
+    case 'recent':
+    default:           query = query.order('created_at', { ascending: false });
+  }
+
+  query = query.range(offset, offset + limit - 1);
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+  return {
+    total: count ?? 0,
+    limit,
+    offset,
+    items: (data || []).map(DB_TO_API),
+  };
+}
+
 async function getById(id) {
   const { data, error } = await supabase
     .from('products')
@@ -105,4 +150,4 @@ async function remove(id) {
   return data ? DB_TO_API(data) : null;
 }
 
-module.exports = { listAll, getById, exists, create, update, remove };
+module.exports = { listAll, listPaginated, getById, exists, create, update, remove };
