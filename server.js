@@ -59,20 +59,19 @@ app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/user-data', userDataRoutes);
 
-// Em produção (Vercel), os assets de public/ são entregues pela CDN — não
-// passam por aqui. Em dev local, o Express serve.
-if (!IS_SERVERLESS) {
-  app.use(
-    express.static(PUBLIC_DIR, {
-      maxAge: 0,
-      etag: true,
-      setHeaders(res) {
-        res.setHeader('X-Powered-By', 'Sync Services');
-        res.setHeader('Cache-Control', 'no-cache');
-      },
-    })
-  );
-}
+// Em produção (Vercel) os assets passam por aqui também — vercel.json
+// roteia todas as requisições para esta função; o Cache-Control abaixo
+// permite que a CDN da Vercel cache os estáticos no edge.
+app.use(
+  express.static(PUBLIC_DIR, {
+    maxAge: IS_SERVERLESS ? '1h' : 0,
+    etag: true,
+    setHeaders(res) {
+      res.setHeader('X-Powered-By', 'Sync Services');
+      if (!IS_SERVERLESS) res.setHeader('Cache-Control', 'no-cache');
+    },
+  })
+);
 
 /** Metadados da loja: consumidos pelo front para montar o link do WhatsApp. */
 app.get('/api/store', (_req, res) => {
@@ -413,23 +412,21 @@ app.delete('/api/admin/products/:id', authMiddleware, adminMiddleware, async (re
 });
 
 /* -----------------------------------------------------------------------
-   Rotas HTML — apenas em dev local. Em produção, a Vercel resolve via
-   vercel.json (rewrites) entregando o HTML direto da CDN.
+   Rotas HTML para os painéis. Como o vercel.json roteia tudo pra esta
+   função, precisamos servir o HTML diretamente aqui em prod e em dev.
 ----------------------------------------------------------------------- */
-if (!IS_SERVERLESS) {
-  app.get(['/admin', '/dashboard'], (_req, res) => {
-    res.sendFile(path.join(PUBLIC_DIR, 'admin.html'));
-  });
+app.get(['/admin', '/dashboard'], (_req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'admin.html'));
+});
 
-  app.get(['/admin/produtos', '/editor-produtos'], (_req, res) => {
-    res.sendFile(path.join(PUBLIC_DIR, 'products-admin.html'));
-  });
+app.get(['/admin/produtos', '/editor-produtos'], (_req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'products-admin.html'));
+});
 
-  // SPA fallback — qualquer rota não-API entrega o catálogo.
-  app.get('*', (_req, res) => {
-    res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
-  });
-}
+// SPA fallback — qualquer rota não-API entrega o catálogo.
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+});
 
 // Listener apenas quando rodado diretamente (npm start / npm run dev).
 // Em serverless, o handler exporta o `app`.
