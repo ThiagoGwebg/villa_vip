@@ -135,6 +135,11 @@
           </table>
         </div>
         <p class="pe-empty" id="emptyMsg" hidden>Nenhum produto encontrado.</p>
+        <div class="vv-pager" id="pager" hidden>
+          <button type="button" class="dash-btn ghost dark" id="pgPrev">‹ Anterior</button>
+          <span class="vv-pager-info" id="pgInfo">—</span>
+          <button type="button" class="dash-btn ghost dark" id="pgNext">Próximo ›</button>
+        </div>
       </div>
 
     </div>
@@ -251,37 +256,17 @@
     </div>
   </div>
 
-  <!-- Modal: confirmação de exclusão -->
-  <div class="pe-overlay" id="deleteOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="deleteTitle">
-    <div class="pe-modal pe-modal--sm">
-      <header class="pe-modal-head">
-        <h2 id="deleteTitle">Excluir produto</h2>
-        <button class="pe-modal-close" id="deleteClose" type="button" aria-label="Fechar">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M18 6 6 18" />
-            <path d="m6 6 12 12" />
-          </svg>
-        </button>
-      </header>
-      <p class="pe-confirm-text">Tem certeza que quer excluir <strong id="deleteName"></strong>? Essa ação não pode ser desfeita.</p>
-      <div class="pe-confirm-actions">
-        <button type="button" class="dash-btn ghost dark" id="deleteCancelBtn">Cancelar</button>
-        <button type="button" class="dash-btn danger" id="deleteConfirmBtn">Excluir</button>
-      </div>
-    </div>
-  </div>
-
+  <script src="/shared.js"></script>
+  <script src="/admin-shell.js"></script>
   <script>
-    (function guard() {
-      const token = localStorage.getItem("token");
-      if (!token) { window.location.replace("/login.html"); return; }
-      try {
-        const u = JSON.parse(localStorage.getItem("user") || "null");
-        if (u && u.nome) {
-          document.getElementById("userName").textContent = u.nome;
-          document.getElementById("userInitial").textContent = u.nome.trim().charAt(0).toUpperCase() || "V";
-        }
-      } catch { /* perfil corrompido */ }
+    (function greet() {
+      const u = VV.user();
+      if (u && u.nome) {
+        document.getElementById("userName").textContent = u.nome;
+        document.getElementById("userInitial").textContent =
+          u.nome.trim().charAt(0).toUpperCase() || "V";
+      }
+      VV.adminShell.mount({ active: "produtos" });
     })();
   </script>
   <script src="/products-admin.js"></script>

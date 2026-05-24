@@ -4,9 +4,9 @@
    ========================================================================== */
 
 const $ = (id) => document.getElementById(id);
-const brl = (n) => Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
-const getToken = () => localStorage.getItem("token");
+// Helpers vêm de shared.js (VV.*). Aliases mantêm o restante curto.
+const brl = VV.brl;
+const authFetch = VV.authFetch;
 
 // Prefixo de ID por categoria (sugestão automática)
 const CAT_PREFIX = {
@@ -19,62 +19,57 @@ const CAT_PREFIX = {
 };
 
 // Estado
-let allProducts = [];
 let storeData = null;
 let editingId = null;      // null = novo, string = editando
-let deleteTarget = null;   // { id, nome }
 let currentTamanhos = [];  // tamanhos do formulário aberto
 let currentImage = null;   // URL da imagem atual no formulário
 
-/* ---------- Guarda de acesso ------------------------------------------- */
-function safeUser() {
-  try { return JSON.parse(localStorage.getItem("user") || "null"); } catch { return null; }
-}
-
-function ensureAdmin() {
-  if (!getToken()) { window.location.replace("/login.html"); return false; }
-  const u = safeUser();
-  if (!u || u.isAdmin !== true) { window.location.replace("/"); return false; }
-  return true;
-}
-
-function logout() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-  window.location.replace("/login.html");
-}
-
-/* ---------- Fetch autenticado ------------------------------------------ */
-async function authFetch(url, opts = {}) {
-  return fetch(url, {
-    ...opts,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + getToken(),
-      ...(opts.headers || {}),
-    },
-  });
-}
+// Paginação server-side
+const page = {
+  items: [],
+  total: 0,
+  limit: 20,
+  offset: 0,
+  q: '',
+  cat: '',
+};
+let searchTimer;
 
 /* ---------- Inicialização ---------------------------------------------- */
 async function init() {
   setState("loading");
   try {
-    const [storeRes, productsRes] = await Promise.all([
-      fetch("/api/store"),
-      authFetch("/api/admin/products"),
-    ]);
-    if (productsRes.status === 401) return logout();
-    if (productsRes.status === 403) return setState("deny");
-    if (!storeRes.ok || !productsRes.ok) throw new Error("HTTP " + productsRes.status);
-
+    const storeRes = await fetch("/api/store");
+    if (!storeRes.ok) throw new Error("HTTP " + storeRes.status);
     storeData = await storeRes.json();
-    allProducts = await productsRes.json();
-
     populateCatFilter();
+    await loadPage();
+  } catch (err) {
+    if (err?.message === "Sessão expirada") return;
+    $("errorMsg").textContent = "Não foi possível carregar (" + err.message + ").";
+    setState("error");
+  }
+}
+
+async function loadPage() {
+  const params = new URLSearchParams({ limit: page.limit, offset: page.offset });
+  if (page.q)   params.set("q", page.q);
+  if (page.cat) params.set("categoria", page.cat);
+
+  try {
+    let denied = false;
+    const res = await authFetch(`/api/admin/products?${params}`, {
+      onForbidden: () => (denied = true),
+    });
+    if (denied) return setState("deny");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    page.items = data.items;
+    page.total = data.total;
     renderTable();
     setState("ready");
   } catch (err) {
+    if (err?.message === "Sessão expirada") return;
     $("errorMsg").textContent = "Não foi possível carregar (" + err.message + ").";
     setState("error");
   }
@@ -90,7 +85,7 @@ function setState(s) {
 }
 
 function updateStamp() {
-  $("stamp").textContent = `${allProducts.length} produto(s) no catálogo`;
+  $("stamp").textContent = `${page.total} produto(s) no catálogo`;
 }
 
 /* ---------- Filtros ----------------------------------------------------- */
@@ -106,24 +101,13 @@ function catNome(id) {
   return c ? c.nome : id;
 }
 
-function filteredProducts() {
-  const q = $("searchInput").value.trim().toLowerCase();
-  const cat = $("catFilter").value;
-  return allProducts.filter((p) => {
-    const matchQ =
-      !q ||
-      [p.nome, p.marca, p.id, p.descricao].some((s) =>
-        (s || "").toLowerCase().includes(q)
-      );
-    const matchCat = !cat || p.categoria === cat;
-    return matchQ && matchCat;
-  });
-}
-
 /* ---------- Tabela ------------------------------------------------------ */
 function renderTable() {
-  const rows = filteredProducts();
-  $("productCount").textContent = `${rows.length} de ${allProducts.length} produto(s)`;
+  const rows = page.items;
+  const current = Math.floor(page.offset / page.limit) + 1;
+  const totalPages = Math.max(1, Math.ceil(page.total / page.limit));
+  $("productCount").textContent =
+    `${page.total} produto(s) · página ${current} de ${totalPages}`;
   $("emptyMsg").hidden = rows.length > 0;
 
   $("productsBody").innerHTML = rows
@@ -152,6 +136,18 @@ function renderTable() {
   $("productsBody").querySelectorAll(".pe-act.del").forEach((b) =>
     b.addEventListener("click", () => openDelete(b.dataset.id, b.dataset.nome))
   );
+
+  renderPager();
+}
+
+function renderPager() {
+  if (!$("pager")) return;
+  const current = Math.floor(page.offset / page.limit) + 1;
+  const totalPages = Math.max(1, Math.ceil(page.total / page.limit));
+  $("pager").hidden = page.total <= page.limit;
+  $("pgInfo").textContent = `Página ${current} de ${totalPages}`;
+  $("pgPrev").disabled = current <= 1;
+  $("pgNext").disabled = current >= totalPages;
 }
 
 /* ---------- Tag input de tamanhos -------------------------------------- */
@@ -214,19 +210,58 @@ function imgStatusMsg(text, kind) {
   el.hidden = false;
 }
 
-// Upload de arquivo ao servidor
+/**
+ * Downscale client-side: reduz fotos de celular (3–5 MB) para ~300–600 KB
+ * antes de enviar. Resolve o risco de estourar o timeout de 10s da Vercel
+ * em conexões móveis e libera espaço no Supabase Storage.
+ */
+async function downscaleImage(file, { maxSide = 1600, quality = 0.85 } = {}) {
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type)) return file;
+  // Arquivos já pequenos não precisam ser reprocessados.
+  if (file.size <= 600 * 1024) return file;
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    if (scale >= 1) { bitmap.close?.(); return file; }
+
+    const w = Math.round(bitmap.width * scale);
+    const h = Math.round(bitmap.height * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext("2d").drawImage(bitmap, 0, 0, w, h);
+    bitmap.close?.();
+
+    const blob = await new Promise((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", quality)
+    );
+    if (!blob || blob.size >= file.size) return file;       // sem ganho
+    const baseName = file.name.replace(/\.[^.]+$/, "") || "imagem";
+    return new File([blob], `${baseName}.jpg`, { type: "image/jpeg" });
+  } catch (err) {
+    console.warn("[downscale] falhou, enviando original:", err);
+    return file;
+  }
+}
+
+// Upload de arquivo ao servidor (com downscale prévio)
 $("fImagem").addEventListener("change", async () => {
-  const file = $("fImagem").files[0];
-  if (!file) return;
-  imgStatusMsg("Enviando imagem…", "info");
+  const original = $("fImagem").files[0];
+  if (!original) return;
+  imgStatusMsg("Otimizando imagem…", "info");
+
+  const file = await downscaleImage(original);
+  const savedKB = Math.max(0, Math.round((original.size - file.size) / 1024));
+  imgStatusMsg(
+    savedKB > 50 ? `Enviando imagem (economizou ${savedKB} KB)…` : "Enviando imagem…",
+    "info"
+  );
+
   const form = new FormData();
   form.append("imagem", file);
   try {
-    const res = await fetch("/api/admin/upload", {
-      method: "POST",
-      headers: { Authorization: "Bearer " + getToken() },
-      body: form,
-    });
+    const res = await authFetch("/api/admin/upload", { method: "POST", body: form });
     const data = await res.json();
     if (!res.ok) { imgStatusMsg(data.message || "Erro no upload.", "error"); return; }
     setImage(data.url);
@@ -288,7 +323,7 @@ function openCreate() {
 }
 
 function openEdit(id) {
-  const p = allProducts.find((x) => x.id === id);
+  const p = page.items.find((x) => x.id === id);
   if (!p) return;
   editingId = id;
   currentTamanhos = [...(p.tamanhos || [])];
@@ -315,10 +350,27 @@ function openEdit(id) {
   $("fNome").focus();
 }
 
-function openDelete(id, nome) {
-  deleteTarget = { id, nome };
-  $("deleteName").textContent = nome;
-  openOverlay("deleteOverlay");
+async function openDelete(id, nome) {
+  const ok = await VV.confirm({
+    title: "Excluir produto",
+    body: `Tem certeza que deseja excluir “${nome}” (${id})? Esta ação não pode ser desfeita.`,
+    confirmLabel: "Excluir",
+    cancelLabel: "Cancelar",
+    danger: true,
+  });
+  if (!ok) return;
+  try {
+    const res = await authFetch(`/api/admin/products/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      VV.toast(data.message || "Erro ao excluir.", { kind: "error" });
+      return;
+    }
+    VV.toast(`“${nome}” excluído.`, { kind: "success" });
+    await reloadProducts();
+  } catch {
+    VV.toast("Falha na conexão.", { kind: "error" });
+  }
 }
 
 /* ---------- Overlay helpers -------------------------------------------- */
@@ -340,12 +392,16 @@ function showFormMsg(text, kind) {
   el.hidden = false;
 }
 
-/* ---------- Auto-sugestão de ID ao trocar categoria -------------------- */
+/* ---------- Auto-sugestão de ID ao trocar categoria --------------------
+   Usa apenas a página visível como amostra; em prod, devs podem rodar
+   ?all=1 ou conferir manualmente. É só uma sugestão — o backend valida
+   colisão antes de criar (server.js: products.exists).
+   --------------------------------------------------------------------- */
 $("fCategoria").addEventListener("change", () => {
   if (editingId) return;
   const prefix = CAT_PREFIX[$("fCategoria").value];
   if (!prefix) return;
-  const existing = allProducts
+  const existing = page.items
     .filter((p) => p.id.startsWith(prefix + "-"))
     .map((p) => parseInt(p.id.split("-")[1]))
     .filter((n) => !isNaN(n));
@@ -406,8 +462,8 @@ $("productForm").addEventListener("submit", async (e) => {
   };
 
   const btn = $("formSubmit");
-  btn.disabled = true;
-  btn.textContent = "Salvando…";
+  const wasEditing = !!editingId;
+  VV.setBusy(btn, true, "Salvando…");
 
   try {
     const url    = editingId ? `/api/admin/products/${editingId}` : "/api/admin/products";
@@ -416,49 +472,24 @@ $("productForm").addEventListener("submit", async (e) => {
     const data   = await res.json();
     if (!res.ok) { showFormMsg(data.message || "Erro ao salvar.", "error"); return; }
     closeOverlay("formOverlay");
+    VV.toast(wasEditing ? "Produto atualizado." : "Produto criado.", { kind: "success" });
     await reloadProducts();
   } catch {
     showFormMsg("Falha na conexão. Tente novamente.", "error");
   } finally {
-    btn.disabled = false;
-    btn.textContent = editingId ? "Salvar alterações" : "Criar produto";
-  }
-});
-
-/* ---------- Confirmar exclusão ----------------------------------------- */
-$("deleteConfirmBtn").addEventListener("click", async () => {
-  if (!deleteTarget) return;
-  const btn = $("deleteConfirmBtn");
-  btn.disabled = true;
-  btn.textContent = "Excluindo…";
-  try {
-    const res = await authFetch(`/api/admin/products/${deleteTarget.id}`, { method: "DELETE" });
-    if (!res.ok) { alert("Erro ao excluir. Tente novamente."); return; }
-    closeOverlay("deleteOverlay");
-    deleteTarget = null;
-    await reloadProducts();
-  } catch {
-    alert("Falha na conexão.");
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "Excluir";
+    VV.setBusy(btn, false);
   }
 });
 
 /* ---------- Recarregar lista ------------------------------------------- */
 async function reloadProducts() {
-  const res = await authFetch("/api/admin/products");
-  if (res.ok) {
-    allProducts = await res.json();
-    renderTable();
-    updateStamp();
-  }
+  await loadPage();
 }
 
 /* ---------- Eventos globais -------------------------------------------- */
 $("btnNewProduct").addEventListener("click", openCreate);
-$("btnLogout").addEventListener("click", logout);
-$("btnDenyLogout").addEventListener("click", logout);
+$("btnLogout").addEventListener("click", () => VV.logout());
+$("btnDenyLogout").addEventListener("click", () => VV.logout());
 $("btnRetry").addEventListener("click", init);
 
 $("formClose").addEventListener("click", () => closeOverlay("formOverlay"));
@@ -467,21 +498,38 @@ $("formOverlay").addEventListener("click", (e) => {
   if (e.target.id === "formOverlay") closeOverlay("formOverlay");
 });
 
-$("deleteClose").addEventListener("click", () => closeOverlay("deleteOverlay"));
-$("deleteCancelBtn").addEventListener("click", () => closeOverlay("deleteOverlay"));
-$("deleteOverlay").addEventListener("click", (e) => {
-  if (e.target.id === "deleteOverlay") closeOverlay("deleteOverlay");
+$("searchInput").addEventListener("input", (e) => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    page.q = e.target.value.trim();
+    page.offset = 0;
+    loadPage();
+  }, 300);
+});
+$("catFilter").addEventListener("change", (e) => {
+  page.cat = e.target.value;
+  page.offset = 0;
+  loadPage();
 });
 
-$("searchInput").addEventListener("input", renderTable);
-$("catFilter").addEventListener("change", renderTable);
+if ($("pgPrev")) {
+  $("pgPrev").addEventListener("click", () => {
+    if (page.offset === 0) return;
+    page.offset = Math.max(0, page.offset - page.limit);
+    loadPage();
+  });
+}
+if ($("pgNext")) {
+  $("pgNext").addEventListener("click", () => {
+    if (page.offset + page.limit >= page.total) return;
+    page.offset += page.limit;
+    loadPage();
+  });
+}
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") {
-    closeOverlay("formOverlay");
-    closeOverlay("deleteOverlay");
-  }
+  if (e.key === "Escape") closeOverlay("formOverlay");
 });
 
 /* ---------- Boot -------------------------------------------------------- */
-if (ensureAdmin()) init();
+if (VV.guard({ requireAdmin: true })) init();

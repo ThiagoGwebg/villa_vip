@@ -39,7 +39,7 @@ const create = async (req, res) => {
   try {
     const pedido = await createOrder(
       req.token,
-      req.user.id,
+      req.user,
       limpos,
       Math.round(total * 100) / 100
     );

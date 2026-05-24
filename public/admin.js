@@ -6,10 +6,10 @@
 
 const $ = (id) => document.getElementById(id);
 
-const brl = (n) =>
-  Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const num = (n) => Number(n).toLocaleString("pt-BR");
-const pct = (n) => `${Number(n).toLocaleString("pt-BR")}%`;
+// Formatters vêm de shared.js (window.VV). Aliases mantêm o restante do arquivo legível.
+const brl = VV.brl;
+const num = VV.num;
+const pct = VV.pct;
 
 /* ---------- Tooltip flutuante compartilhado --------------------------- */
 const tip = $("tip");
@@ -27,61 +27,23 @@ function bindTip(el, html) {
 }
 
 /* ---------- Carga de dados -------------------------------------------- */
-function logout(toLogin) {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-  if (toLogin) window.location.replace("/login.html");
-}
-
-/* ---------- Guarda de acesso -----------------------------------------
-   Cliente comum não vê o painel. Este guard é defesa em profundidade: o
-   gate real continua sendo o 403 de /api/analytics (que lê a coluna
-   `admin` no banco). Aqui só evitamos que um não-admin chegue a ver o
-   esqueleto do painel — sem sessão vai pro login; logado mas sem admin
-   volta pra vitrine, como um cliente normal. */
-function getStoredUser() {
-  try {
-    return JSON.parse(localStorage.getItem("user") || "null");
-  } catch {
-    return null;
-  }
-}
-
-function ensureAdmin() {
-  if (!localStorage.getItem("token")) {
-    window.location.replace("/login.html");
-    return false;
-  }
-  const user = getStoredUser();
-  if (!user || user.isAdmin !== true) {
-    window.location.replace("/");
-    return false;
-  }
-  return true;
-}
-
 async function load() {
   setState("loading");
-  const token = localStorage.getItem("token");
-  if (!token) return logout(true);
   try {
-    const res = await fetch("/api/analytics", {
+    const res = await VV.authFetch("/api/analytics", {
       cache: "no-store",
-      headers: { Authorization: "Bearer " + token },
+      onForbidden: () => {
+        setState("deny");
+        $("stamp").textContent = "Acesso restrito";
+      },
     });
-    // 401: sessão inválida/expirada → encerra e manda relogar.
-    if (res.status === 401) return logout(true);
-    // 403: logado, mas e-mail fora da allowlist de admin → tela de bloqueio.
-    if (res.status === 403) {
-      setState("deny");
-      $("stamp").textContent = "Acesso restrito";
-      return;
-    }
+    if (res.status === 403) return;
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     render(data);
     setState("ready");
   } catch (err) {
+    if (err?.message === "Sessão expirada") return;
     $("errorMsg").textContent =
       "Não foi possível carregar os dados (" + err.message + ").";
     setState("error");
@@ -355,8 +317,8 @@ function tableDestaques(rows) {
 }
 
 /* ---------- Ações ----------------------------------------------------- */
-$("btnLogout").addEventListener("click", () => logout(true));
-$("btnDenyLogout").addEventListener("click", () => logout(true));
+$("btnLogout").addEventListener("click", () => VV.logout());
+$("btnDenyLogout").addEventListener("click", () => VV.logout());
 
 function refresh(btn) {
   btn.classList.add("is-spin");
@@ -368,4 +330,4 @@ $("btnRefresh").addEventListener("click", (e) =>
 );
 $("btnRetry").addEventListener("click", () => load());
 
-if (ensureAdmin()) load();
+if (VV.guard({ requireAdmin: true })) load();

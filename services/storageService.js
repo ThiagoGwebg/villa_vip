@@ -20,12 +20,16 @@ function pickExt(mimetype, originalname) {
   return m ? m[1].toLowerCase() : 'jpg';
 }
 
-async function uploadProductImage({ buffer, mimetype, originalname }) {
+/**
+ * Faz upload de uma imagem para um bucket do Supabase Storage.
+ * Devolve a URL pública.
+ */
+async function uploadImage({ buffer, mimetype, originalname }, bucket = BUCKET) {
   const ext = pickExt(mimetype, originalname);
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
 
   const { error } = await supabase.storage
-    .from(BUCKET)
+    .from(bucket)
     .upload(filename, buffer, {
       contentType: mimetype,
       cacheControl: '31536000',
@@ -34,8 +38,12 @@ async function uploadProductImage({ buffer, mimetype, originalname }) {
 
   if (error) throw error;
 
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(filename);
+  const { data } = supabase.storage.from(bucket).getPublicUrl(filename);
   return data.publicUrl;
 }
 
-module.exports = { uploadProductImage, BUCKET };
+// Wrappers explícitos por contexto — mantém call-sites legíveis.
+const uploadProductImage = (file) => uploadImage(file, BUCKET);
+const uploadStoreImage   = (file) => uploadImage(file, 'store-images');
+
+module.exports = { uploadImage, uploadProductImage, uploadStoreImage, BUCKET };
