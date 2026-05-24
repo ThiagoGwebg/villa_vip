@@ -103,6 +103,8 @@ select {
   justify-content: space-between;
   padding-top: 12px;
   padding-bottom: 12px;
+  flex-wrap: wrap;
+  row-gap: 12px;
 }
 
 .brand {
@@ -1234,6 +1236,22 @@ select {
 }
 
 /* ---------------- RESPONSIVO ---------------- */
+@media (max-width: 420px) {
+  .brand-name {
+    font-size: 22px;
+  }
+  .brand-mark {
+    width: 38px;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .header-actions {
+    gap: 2px;
+  }
+}
+
 @media (min-width:560px) {
   .grid {
     grid-template-columns: repeat(3, 1fr);

@@ -30,6 +30,12 @@
   position: relative;
 }
 
+@media (max-width: 420px) {
+  .auth-container {
+    padding: 30px 20px;
+  }
+}
+
 .auth-brand {
   display: flex;
   flex-direction: column;
