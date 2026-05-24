@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="/styles.css?v=4" />
+<link rel="stylesheet" href="/styles.css?v=8" />
 <link rel="icon" type="image/svg+xml" href="/assets/logo-mark.svg" />
 </head>
 
@@ -92,9 +92,20 @@
   <!-- ===================== HERO ===================== -->
   <section class="hero">
     <div class="wrap hero-inner">
+      <div class="hero-stats" id="heroStats" aria-label="Reputação da loja"></div>
       <p class="hero-eyebrow">Catálogo Digital Oficial</p>
       <h1 class="hero-title">Seu estilo <span>country</span>, do jeito certo</h1>
       <p class="hero-sub">Escolha o modelo, o tamanho e finalize direto no nosso WhatsApp — rápido, sem complicação.</p>
+      <div class="hero-ctas">
+        <button class="hero-cta primary" data-go-cat="botas">
+          Ver botas texanas
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+        <button class="hero-cta ghost" data-go-cat="chapeus">
+          Ver chapéus
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+      </div>
       <div class="hero-steps">
         <span><b>1</b> Navegue</span>
         <span class="dash"></span>
@@ -102,6 +113,25 @@
         <span class="dash"></span>
         <span><b>3</b> Fale no WhatsApp</span>
       </div>
+    </div>
+  </section>
+
+  <!-- ===================== STRIP DE MARCAS ===================== -->
+  <section class="brand-strip" aria-label="Marcas oficiais">
+    <div class="wrap brand-strip-inner">
+      <span class="brand-strip-eyebrow">Marcas Oficiais</span>
+      <div class="brand-strip-list" id="brandStripList"></div>
+    </div>
+  </section>
+
+  <!-- ===================== DESTAQUES ===================== -->
+  <section class="featured" id="featuredSection" hidden aria-label="Mais procurados da loja">
+    <div class="wrap">
+      <div class="sec-head featured-head">
+        <h2><span class="ornament">★</span> Mais procurados da loja <span class="ornament">★</span></h2>
+        <p class="featured-sub">Modelos campeões de venda — separados pelos vendedores da Villa Vip</p>
+      </div>
+      <div class="featured-grid" id="featuredGrid"></div>
     </div>
   </section>
 
@@ -146,6 +176,16 @@
     </div>
   </main>
 
+  <!-- ===================== POR QUE COMPRAR ===================== -->
+  <section class="trust-section" aria-label="Por que comprar na Villa Vip">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Por que comprar na Villa Vip</h2>
+      </div>
+      <div class="trust-grid" id="trustGrid"></div>
+    </div>
+  </section>
+
   <!-- ===================== PROVA SOCIAL / INSTAGRAM ===================== -->
   <section class="social-proof" id="socialProof" aria-label="Avaliações dos clientes e Instagram"></section>
 
@@ -180,43 +220,87 @@
 
   <!-- ===================== MODAL PRODUTO ===================== -->
   <div class="sheet-overlay" id="sheetOverlay" hidden>
-    <div class="sheet" id="productSheet" role="dialog" aria-modal="true" aria-labelledby="sheetName">
+    <div class="sheet sheet-product" id="productSheet" role="dialog" aria-modal="true" aria-labelledby="sheetName">
       <button class="sheet-close" id="sheetClose" aria-label="Fechar">&times;</button>
+      <button class="sheet-share" id="btnSheetShare" aria-label="Compartilhar este produto" title="Compartilhar">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
+      </button>
       <button class="sheet-wish" id="btnSheetWish" aria-label="Salvar nos desejos">
         <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
       </button>
-      <div class="sheet-media" id="sheetMedia"></div>
-      <div class="sheet-body">
-        <span class="sheet-brand" id="sheetBrand"></span>
-        <h2 class="sheet-name" id="sheetName"></h2>
-        <p class="sheet-desc" id="sheetDesc"></p>
-        <div class="sheet-price" id="sheetPrice"></div>
 
-        <div class="opt-block">
-          <label class="opt-label">Tamanho <em id="sizeReq">— selecione</em></label>
-          <div class="size-grid" id="sizeGrid"></div>
+      <div class="sheet-grid">
+        <!-- COLUNA ESQUERDA: MÍDIA -->
+        <div class="sheet-media-col">
+          <div class="sheet-media" id="sheetMedia"></div>
+          <div class="sheet-thumbs" id="sheetThumbs" aria-hidden="true"></div>
         </div>
 
-        <div class="opt-block qty-block">
-          <label class="opt-label">Quantidade</label>
-          <div class="qty">
-            <button id="qtyMinus" aria-label="Diminuir">−</button>
-            <span id="qtyValue">1</span>
-            <button id="qtyPlus" aria-label="Aumentar">+</button>
+        <!-- COLUNA DIREITA: INFO + AÇÕES -->
+        <div class="sheet-info-col">
+          <div class="sheet-body">
+            <div class="sheet-breadcrumb">
+              <span class="sheet-cat" id="sheetCat"></span>
+              <span class="sheet-sep">·</span>
+              <span class="sheet-ref" id="sheetRef"></span>
+            </div>
+            <span class="sheet-brand" id="sheetBrand"></span>
+            <h2 class="sheet-name" id="sheetName"></h2>
+
+            <div class="sheet-chips" id="sheetChips"></div>
+
+            <p class="sheet-desc" id="sheetDesc"></p>
+
+            <div class="sheet-price-block">
+              <div class="sheet-price" id="sheetPrice"></div>
+              <p class="sheet-installments" id="sheetInstallments"></p>
+              <p class="sheet-savings" id="sheetSavings" hidden></p>
+            </div>
+
+            <div class="opt-block">
+              <div class="opt-head">
+                <label class="opt-label">Tamanho <em id="sizeReq">— selecione</em></label>
+                <span class="opt-count" id="sizeCount"></span>
+              </div>
+              <div class="size-grid" id="sizeGrid"></div>
+              <a class="size-help" id="sizeHelp" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v6H3zM3 14h18v6H3zM7 4v6M11 4v6M15 4v6M19 4v6M7 14v6M11 14v6M15 14v6M19 14v6"/></svg>
+                Não tem seu tamanho? Fale com a gente
+              </a>
+            </div>
+
+            <div class="opt-block qty-block">
+              <label class="opt-label">Quantidade</label>
+              <div class="qty">
+                <button id="qtyMinus" aria-label="Diminuir">−</button>
+                <span id="qtyValue">1</span>
+                <button id="qtyPlus" aria-label="Aumentar">+</button>
+              </div>
+            </div>
+
+            <div class="sheet-trust" id="sheetTrust"></div>
+          </div>
+
+          <div class="sheet-sticky-actions">
+            <button class="btn-wa" id="btnBuyWa">
+              <svg viewBox="0 0 32 32" aria-hidden="true">
+                <path
+                  d="M16 3C9 3 3.5 8.5 3.5 15.5c0 2.5.7 4.8 1.9 6.8L3 29l6.9-2.3c1.9 1 4 1.6 6.1 1.6 7 0 12.5-5.5 12.5-12.5S23 3 16 3Zm5.7 15c-.3-.2-1.9-.9-2.1-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.5-1.6-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.6c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.6l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1.1 1-1.1 2.5s1.1 2.9 1.3 3.1c.2.2 2.2 3.4 5.4 4.8.7.3 1.3.5 1.8.6.7.2 1.4.2 1.9.1.6-.1 1.9-.8 2.1-1.5.3-.7.3-1.4.2-1.5-.1-.2-.3-.2-.6-.4Z" />
+              </svg>
+              Pedir pelo WhatsApp
+            </button>
+            <button class="btn-ghost" id="btnAddCart">Adicionar à sacola</button>
           </div>
         </div>
-
-        <div class="sheet-actions">
-          <button class="btn-wa" id="btnBuyWa">
-            <svg viewBox="0 0 32 32" aria-hidden="true">
-              <path
-                d="M16 3C9 3 3.5 8.5 3.5 15.5c0 2.5.7 4.8 1.9 6.8L3 29l6.9-2.3c1.9 1 4 1.6 6.1 1.6 7 0 12.5-5.5 12.5-12.5S23 3 16 3Zm5.7 15c-.3-.2-1.9-.9-2.1-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.5-1.6-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.6c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.6l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1.1 1-1.1 2.5s1.1 2.9 1.3 3.1c.2.2 2.2 3.4 5.4 4.8.7.3 1.3.5 1.8.6.7.2 1.4.2 1.9.1.6-.1 1.9-.8 2.1-1.5.3-.7.3-1.4.2-1.5-.1-.2-.3-.2-.6-.4Z" />
-            </svg>
-            Pedir pelo WhatsApp
-          </button>
-          <button class="btn-ghost" id="btnAddCart">Adicionar à sacola</button>
-        </div>
       </div>
+
+      <!-- RELACIONADOS -->
+      <section class="sheet-related" id="sheetRelated" hidden>
+        <div class="sec-head related-head">
+          <h3>Você também pode gostar</h3>
+        </div>
+        <div class="related-grid" id="relatedGrid"></div>
+      </section>
     </div>
   </div>
 
@@ -313,7 +397,7 @@
 
 <div class="toast" id="toast" hidden></div>
 
-<script src="/app.js?v=4"></script>
+<script src="/app.js?v=7"></script>
 </body>
 
 </html>

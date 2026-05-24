@@ -22,7 +22,8 @@ const CAT_PREFIX = {
 let storeData = null;
 let editingId = null;      // null = novo, string = editando
 let currentTamanhos = [];  // tamanhos do formulário aberto
-let currentImage = null;   // URL da imagem atual no formulário
+let currentImages = [];    // URLs das fotos atuais no formulário (índice 0 = capa)
+const MAX_IMAGES = 5;
 
 // Paginação server-side
 const page = {
@@ -187,20 +188,83 @@ function populateFormSelects() {
     (storeData.marcas || []).map((m) => `<option value="${m}">${m}</option>`).join("");
 }
 
-/* ---------- Imagem ------------------------------------------------------ */
-function setImage(url) {
-  currentImage = url || null;
-  const hasImg = !!currentImage;
-  $("imgPreviewWrap").hidden = !hasImg;
-  $("imgDrop").hidden = hasImg;
-  if (hasImg) {
-    $("imgPreview").src = currentImage;
-    $("fImagemUrl").value = currentImage;
-  } else {
-    $("fImagemUrl").value = "";
-    $("fImagem").value = "";
-  }
+/* ---------- Galeria de fotos -------------------------------------------- */
+function setImages(urls) {
+  currentImages = (Array.isArray(urls) ? urls : []).filter(Boolean).slice(0, MAX_IMAGES);
+  renderGallery();
   $("imgStatus").hidden = true;
+}
+
+function renderGallery() {
+  const grid = $("galleryGrid");
+  const drop = $("imgDrop");
+  if (!grid) return;
+  const slots = currentImages.map((url, i) => `
+    <div class="pe-thumb${i === 0 ? " is-cover" : ""}" data-i="${i}">
+      <img src="${url}" alt="Foto ${i + 1}" loading="lazy">
+      ${i === 0 ? '<span class="pe-thumb-badge">Capa</span>' : ""}
+      <div class="pe-thumb-actions">
+        ${i > 0 ? `<button type="button" class="pe-thumb-btn" data-cover="${i}" title="Definir como capa">★</button>` : ""}
+        ${i > 0 ? `<button type="button" class="pe-thumb-btn" data-move="${i}:-1" title="Mover para a esquerda">←</button>` : ""}
+        ${i < currentImages.length - 1 ? `<button type="button" class="pe-thumb-btn" data-move="${i}:1" title="Mover para a direita">→</button>` : ""}
+        <button type="button" class="pe-thumb-btn danger" data-remove="${i}" title="Remover">×</button>
+      </div>
+    </div>`).join("");
+  grid.innerHTML = slots;
+  grid.hidden = currentImages.length === 0;
+  if (drop) {
+    drop.classList.toggle("pe-img-drop--compact", currentImages.length > 0);
+    drop.querySelector("span").textContent = currentImages.length === 0
+      ? "Arraste fotos ou clique para escolher"
+      : `Adicionar mais (${MAX_IMAGES - currentImages.length} restante${MAX_IMAGES - currentImages.length === 1 ? "" : "s"})`;
+  }
+
+  grid.querySelectorAll("[data-remove]").forEach((b) =>
+    b.addEventListener("click", () => removeImage(+b.dataset.remove))
+  );
+  grid.querySelectorAll("[data-cover]").forEach((b) =>
+    b.addEventListener("click", () => setCover(+b.dataset.cover))
+  );
+  grid.querySelectorAll("[data-move]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const [iStr, dirStr] = b.dataset.move.split(":");
+      moveImage(+iStr, +dirStr);
+    })
+  );
+}
+
+function addImage(url) {
+  if (!url) return;
+  if (currentImages.length >= MAX_IMAGES) {
+    imgStatusMsg(`Limite de ${MAX_IMAGES} fotos atingido.`, "error");
+    return;
+  }
+  if (currentImages.includes(url)) {
+    imgStatusMsg("Essa foto já está na galeria.", "info");
+    return;
+  }
+  currentImages.push(url);
+  renderGallery();
+}
+
+function removeImage(i) {
+  if (i < 0 || i >= currentImages.length) return;
+  currentImages.splice(i, 1);
+  renderGallery();
+}
+
+function setCover(i) {
+  if (i <= 0 || i >= currentImages.length) return;
+  const [picked] = currentImages.splice(i, 1);
+  currentImages.unshift(picked);
+  renderGallery();
+}
+
+function moveImage(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= currentImages.length) return;
+  [currentImages[i], currentImages[j]] = [currentImages[j], currentImages[i]];
+  renderGallery();
 }
 
 function imgStatusMsg(text, kind) {
@@ -245,53 +309,82 @@ async function downscaleImage(file, { maxSide = 1600, quality = 0.85 } = {}) {
   }
 }
 
-// Upload de arquivo ao servidor (com downscale prévio)
-$("fImagem").addEventListener("change", async () => {
-  const original = $("fImagem").files[0];
-  if (!original) return;
-  imgStatusMsg("Otimizando imagem…", "info");
-
-  const file = await downscaleImage(original);
-  const savedKB = Math.max(0, Math.round((original.size - file.size) / 1024));
-  imgStatusMsg(
-    savedKB > 50 ? `Enviando imagem (economizou ${savedKB} KB)…` : "Enviando imagem…",
-    "info"
-  );
-
+/** Sobe uma foto pro Storage e devolve a URL. Erros viram null + status visual. */
+async function uploadOne(file) {
+  const optimized = await downscaleImage(file);
   const form = new FormData();
-  form.append("imagem", file);
+  form.append("imagem", optimized);
   try {
     const res = await authFetch("/api/admin/upload", { method: "POST", body: form });
     const data = await res.json();
-    if (!res.ok) { imgStatusMsg(data.message || "Erro no upload.", "error"); return; }
-    setImage(data.url);
-    imgStatusMsg("Imagem carregada com sucesso.", "ok");
+    if (!res.ok) {
+      imgStatusMsg(data.message || "Erro no upload.", "error");
+      return null;
+    }
+    return data.url;
   } catch {
     imgStatusMsg("Falha na conexão. Tente novamente.", "error");
+    return null;
   }
+}
+
+/** Sobe vários arquivos respeitando o limite, em sequência (rate-limit-safe). */
+async function uploadFiles(fileList) {
+  const files = Array.from(fileList || []);
+  if (!files.length) return;
+  const slots = MAX_IMAGES - currentImages.length;
+  if (slots <= 0) {
+    imgStatusMsg(`Limite de ${MAX_IMAGES} fotos atingido. Remova alguma antes.`, "error");
+    return;
+  }
+  const toUpload = files.slice(0, slots);
+  const ignored = files.length - toUpload.length;
+
+  let done = 0;
+  for (const f of toUpload) {
+    done++;
+    imgStatusMsg(`Enviando ${done}/${toUpload.length}…`, "info");
+    const url = await uploadOne(f);
+    if (url) {
+      currentImages.push(url);
+      renderGallery();
+    }
+  }
+  imgStatusMsg(
+    ignored > 0
+      ? `Pronto. ${toUpload.length} foto(s) enviada(s). ${ignored} ignorada(s) pelo limite de ${MAX_IMAGES}.`
+      : `Pronto. ${toUpload.length} foto(s) enviada(s).`,
+    "ok"
+  );
+  $("fImagem").value = "";
+}
+
+// Upload de arquivo(s) ao servidor
+$("fImagem").addEventListener("change", () => {
+  uploadFiles($("fImagem").files);
 });
 
-// URL colada manualmente
-$("fImagemUrl").addEventListener("change", () => {
-  const url = $("fImagemUrl").value.trim();
-  if (url) setImage(url);
+// URL colada manualmente: adiciona à galeria ao confirmar (Enter / botão)
+function handleAddUrl() {
+  const input = $("fImagemUrl");
+  const url = input.value.trim();
+  if (!url) return;
+  addImage(url);
+  input.value = "";
+}
+$("fImagemUrl").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); handleAddUrl(); }
 });
+$("fImagemUrlAdd").addEventListener("click", handleAddUrl);
 
-$("imgRemove").addEventListener("click", () => setImage(null));
-
-// Drag & drop
+// Drag & drop (aceita múltiplos arquivos)
 $("imgDrop").addEventListener("dragover", (e) => { e.preventDefault(); $("imgDrop").classList.add("drag-over"); });
 $("imgDrop").addEventListener("dragleave", () => $("imgDrop").classList.remove("drag-over"));
 $("imgDrop").addEventListener("drop", (e) => {
   e.preventDefault();
   $("imgDrop").classList.remove("drag-over");
-  const file = e.dataTransfer?.files[0];
-  if (file) {
-    const dt = new DataTransfer();
-    dt.items.add(file);
-    $("fImagem").files = dt.files;
-    $("fImagem").dispatchEvent(new Event("change"));
-  }
+  const files = e.dataTransfer?.files;
+  if (files && files.length) uploadFiles(files);
 });
 
 function resetForm() {
@@ -306,8 +399,8 @@ function resetForm() {
   $("fDestaque").checked = false;
   $("formMsg").hidden = true;
   currentTamanhos = [];
-  currentImage = null;
-  setImage(null);
+  currentImages = [];
+  setImages([]);
   renderTagChips();
 }
 
@@ -342,7 +435,11 @@ function openEdit(id) {
   $("fCategoria").value = p.categoria;
   $("fMarca").value = p.marca;
 
-  setImage(p.imagem || null);
+  // Compat: produtos antigos só tinham `imagem`; novos têm `imagens[]`.
+  const galeria = Array.isArray(p.imagens) && p.imagens.length
+    ? p.imagens
+    : (p.imagem ? [p.imagem] : []);
+  setImages(galeria);
   renderTagChips();
   $("formTitle").textContent = "Editar Produto";
   $("formSubmit").textContent = "Salvar alterações";
@@ -458,7 +555,8 @@ $("productForm").addEventListener("submit", async (e) => {
     tamanhos: currentTamanhos,
     tag: $("fTag").value || null,
     destaque: $("fDestaque").checked,
-    imagem: currentImage || null,
+    imagens: currentImages.slice(),
+    imagem: currentImages[0] || null,
   };
 
   const btn = $("formSubmit");

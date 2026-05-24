@@ -6,33 +6,53 @@ const supabase = require('../config/supabase');
  * com o front (campos `precoDe` etc.) — o mapeamento DB ↔ API vive aqui.
  */
 
-const DB_TO_API = (row) => ({
-  id: row.id,
-  nome: row.nome,
-  categoria: row.categoria,
-  marca: row.marca,
-  preco: Number(row.preco),
-  precoDe: row.preco_de == null ? null : Number(row.preco_de),
-  descricao: row.descricao || '',
-  tamanhos: row.tamanhos || [],
-  tag: row.tag,
-  destaque: !!row.destaque,
-  imagem: row.imagem,
-});
+// Normaliza imagens vindas do banco: prioriza imagens[], cai pra imagem singular legada.
+function readImagens(row) {
+  const arr = Array.isArray(row.imagens) ? row.imagens.filter(Boolean) : [];
+  if (arr.length) return arr;
+  return row.imagem ? [row.imagem] : [];
+}
 
-const API_TO_DB = (p) => ({
-  id: String(p.id).trim(),
-  nome: String(p.nome).trim(),
-  categoria: String(p.categoria).trim(),
-  marca: String(p.marca).trim(),
-  preco: Number(p.preco),
-  preco_de: p.precoDe == null ? null : Number(p.precoDe),
-  descricao: String(p.descricao || '').trim(),
-  tamanhos: Array.isArray(p.tamanhos) ? p.tamanhos.map(String) : [],
-  tag: p.tag || null,
-  destaque: Boolean(p.destaque),
-  imagem: p.imagem ? String(p.imagem).trim() : null,
-});
+const DB_TO_API = (row) => {
+  const imagens = readImagens(row);
+  return {
+    id: row.id,
+    nome: row.nome,
+    categoria: row.categoria,
+    marca: row.marca,
+    preco: Number(row.preco),
+    precoDe: row.preco_de == null ? null : Number(row.preco_de),
+    descricao: row.descricao || '',
+    tamanhos: row.tamanhos || [],
+    tag: row.tag,
+    destaque: !!row.destaque,
+    imagem: imagens[0] || null, // back-compat
+    imagens,
+  };
+};
+
+const API_TO_DB = (p) => {
+  // Aceita imagens[] OU imagem (string) — converge tudo num array; mantém imagem espelhando a capa.
+  const incomingArr = Array.isArray(p.imagens) ? p.imagens.filter((u) => typeof u === 'string' && u.trim()) : null;
+  const imagens = incomingArr && incomingArr.length
+    ? incomingArr.map((u) => u.trim())
+    : (p.imagem ? [String(p.imagem).trim()] : []);
+
+  return {
+    id: String(p.id).trim(),
+    nome: String(p.nome).trim(),
+    categoria: String(p.categoria).trim(),
+    marca: String(p.marca).trim(),
+    preco: Number(p.preco),
+    preco_de: p.precoDe == null ? null : Number(p.precoDe),
+    descricao: String(p.descricao || '').trim(),
+    tamanhos: Array.isArray(p.tamanhos) ? p.tamanhos.map(String) : [],
+    tag: p.tag || null,
+    destaque: Boolean(p.destaque),
+    imagem: imagens[0] || null, // espelha capa pra back-compat
+    imagens,
+  };
+};
 
 async function listAll() {
   const { data, error } = await supabase

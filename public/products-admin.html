@@ -219,21 +219,19 @@
         </div>
 
         <div class="pe-field">
-          <label>Imagem do produto</label>
+          <label>Fotos do produto <small>— até 5; a primeira é a capa</small></label>
           <div class="pe-img-section">
-            <div class="pe-img-preview-wrap" id="imgPreviewWrap" hidden>
-              <img class="pe-img-preview" id="imgPreview" alt="Preview da imagem">
-              <button type="button" class="pe-img-remove" id="imgRemove">Remover imagem</button>
-            </div>
+            <div class="pe-gallery" id="galleryGrid"></div>
             <label class="pe-img-drop" id="imgDrop" for="fImagem">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <span>Arraste uma foto ou clique para escolher</span>
-              <small>JPG, PNG ou WebP · máx. 8 MB</small>
-              <input type="file" id="fImagem" accept="image/jpeg,image/png,image/webp">
+              <span>Arraste fotos ou clique para escolher</span>
+              <small>JPG, PNG ou WebP · máx. 8 MB cada · pode enviar várias de uma vez</small>
+              <input type="file" id="fImagem" accept="image/jpeg,image/png,image/webp" multiple>
             </label>
             <div class="pe-img-url-row">
               <span class="pe-img-or">ou cole uma URL</span>
               <input type="url" id="fImagemUrl" class="pe-img-url" placeholder="https://exemplo.com/foto.jpg" autocomplete="off">
+              <button type="button" class="dash-btn ghost dark pe-img-url-add" id="fImagemUrlAdd">Adicionar</button>
             </div>
             <p class="pe-img-status" id="imgStatus" hidden></p>
           </div>

@@ -24,6 +24,7 @@ const state = {
   cart: loadCart(),
   wishlist: loadWishlist(),
   user: loadUser(),
+  allProducts: [], // cache da lista completa (para destaques + relacionados)
 };
 
 /** Lê usuário logado */
@@ -79,6 +80,33 @@ const BULL =
 const IG_ICON =
   '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1.3"/></svg>';
 
+/* ---------- Atributos por categoria (mostrados como chips no modal) ---------- */
+const CAT_ATTRS = {
+  botas:        ["Couro Legítimo", "Solado Costurado", "Bico Tradicional"],
+  chapeus:      ["Feltro/Palha", "Aba Moldável", "Acabamento Premium"],
+  camisas:      ["Algodão", "Modelagem Country", "Pronta Entrega"],
+  "jeans-fem":  ["Modelagem Cintura Alta", "Tecido Resistente", "Visual Country"],
+  masculino:    ["Estilo Country", "Tecido Premium", "Pronta Entrega"],
+  acessorios:   ["Couro Selecionado", "Acabamento Artesanal", "Marca Oficial"],
+};
+const CAT_DEFAULT_ATTRS = ["Marca Oficial", "Pronta Entrega", "Atendimento Direto"];
+
+/* ---------- Trust signals (home + modal) — fallback default. store.json pode sobrescrever ---------- */
+const TRUST_DEFAULT = [
+  { ico: "store",    titulo: "Loja física em Mogi Mirim/SP", texto: "5 anos no mercado country" },
+  { ico: "truck",    titulo: "Enviamos para todo o Brasil",  texto: "Combine o frete pelo WhatsApp" },
+  { ico: "chat",     titulo: "Atendimento humano",           texto: "Você fala direto com a loja" },
+  { ico: "shield",   titulo: "Marcas oficiais",              texto: "Eldorado, TX Farm, Tomahawk e mais" },
+];
+
+const TRUST_ICONS = {
+  store:  '<svg viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9M3 9v11h18V9M3 9h18M8 14h8"/></svg>',
+  truck:  '<svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 11h5l2 3v2h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>',
+  chat:   '<svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-12 6.9L4 20l1.1-4A8 8 0 1 1 21 12z"/></svg>',
+  shield: '<svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>',
+  star:   '<svg viewBox="0 0 24 24"><path d="M12 2l3 7 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></svg>',
+};
+
 /** Renderiza N estrelas cheias + vazias a partir da nota (0–5). */
 function stars(n) {
   const full = Math.round(Number(n) || 0);
@@ -97,16 +125,23 @@ function catIconKey(cat) {
   return { camisas: "shirt", "jeans-fem": "jeans", masculino: "man", acessorios: "belt", botas: "boot", chapeus: "hat" }[cat] || "grid";
 }
 
+/** Capa do produto: prioriza imagens[0], cai pra imagem singular. */
+function coverImage(p) {
+  if (Array.isArray(p.imagens) && p.imagens.length) return p.imagens[0];
+  return p.imagem || null;
+}
+
 /* ---------- Mídia (foto real ou placeholder ilustrado por categoria) ---------- */
 function mediaHTML(p, tagInside) {
   const tagHTML = tagInside && p.tag
     ? `<span class="tag ${p.tag === "Novo" ? "novo" : ""}">${p.tag}</span>`
     : "";
-  if (p.imagem) {
+  const capa = coverImage(p);
+  if (capa) {
     return `
       <div class="card-media m-${p.categoria} has-img">
         ${tagHTML}
-        <img class="card-img" src="${escapeHTML(p.imagem)}" alt="${escapeHTML(p.nome)}"
+        <img class="card-img" src="${escapeHTML(capa)}" alt="${escapeHTML(p.nome)}"
           onerror="this.closest('.card-media').classList.remove('has-img')">
         <span class="wm" aria-hidden="true">${BULL}</span>
         <span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>
@@ -122,15 +157,61 @@ function mediaHTML(p, tagInside) {
     </div>`;
 }
 
+/** Renderiza a imagem principal do modal com a URL passada (mantém marca + categoria). */
+function renderSheetMainImage(p, url) {
+  const m = $("sheetMedia");
+  if (!m) return;
+  m.className = "sheet-media m-" + p.categoria + (url ? " has-img" : "");
+  m.innerHTML = url
+    ? `<img class="sheet-img" src="${escapeHTML(url)}" alt="${escapeHTML(p.nome)}"
+         onerror="this.closest('.sheet-media').classList.remove('has-img')">
+       <span class="wm" aria-hidden="true">${BULL}</span>
+       <span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>
+       <span class="m-brand">${p.marca}</span>`
+    : `<span class="wm" aria-hidden="true">${BULL}</span>
+       <span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>
+       <span class="m-brand">${p.marca}</span>`;
+}
+
 /* ---------- Boot ---------- */
 async function init() {
   state.store = await fetch(API.store).then((r) => r.json());
+
+  // Carrega lista completa uma vez (alimenta destaques + relacionados sem novo request)
+  try {
+    const all = await fetch(API.products("ordenar=destaque")).then((r) => r.json());
+    state.allProducts = Array.isArray(all.produtos) ? all.produtos : [];
+  } catch {
+    state.allProducts = [];
+  }
+
   renderChrome();
   bindEvents();
   await loadProducts();
   updateCartBadge();
   updateWishlistBadge();
   await loadFromServer();
+
+  // Deep link: ?p=ID abre o modal direto (compartilhamento + recarregar página)
+  maybeOpenFromUrl();
+}
+
+/* ---------- Deep link & share ---------- */
+/** Monta a URL pública e absoluta de um produto (usada em share + history). */
+function productUrl(id) {
+  return `${location.origin}/?p=${encodeURIComponent(id)}`;
+}
+
+/** Lê ?p= e abre o modal se o produto existir; chamado no boot e no popstate. */
+function maybeOpenFromUrl() {
+  const id = new URLSearchParams(location.search).get("p");
+  if (!id) {
+    if (state.current) closeOverlay("sheetOverlay");
+    return;
+  }
+  if (state.current && state.current.id === id) return;
+  // Não empurra história aqui — a URL já está correta.
+  openSheet(id, state.allProducts, { skipHistory: true });
 }
 
 function renderChrome() {
@@ -177,11 +258,101 @@ function renderChrome() {
       <a href="${s.mapsUrl}" target="_blank" rel="noopener">Ver no mapa</a>
     </div>`;
 
+  // Hero: stats de reputação
+  renderHeroStats();
+
+  // Strip de marcas oficiais
+  renderBrandStrip();
+
+  // Seção de destaques (Mais procurados)
+  renderFeatured();
+
+  // Seção "Por que comprar"
+  renderTrustSection();
+
   // Prova social: avaliações do Google + clientes + Instagram
   renderSocialProof();
 
   // Autenticação
   renderAuth();
+}
+
+/* ---------- Hero: stats inline (Google + clientes + cidade) ---------- */
+function renderHeroStats() {
+  const box = $("heroStats");
+  if (!box) return;
+  const sp = (state.store && state.store.social) || {};
+  const g = sp.google || {};
+  const cli = sp.clientes || {};
+  const nota = g.nota ? Number(g.nota).toFixed(1).replace(".", ",") : null;
+  const cidade = (state.store.endereco || "").split(",").pop().trim() || "Mogi Mirim/SP";
+
+  const items = [];
+  if (nota) items.push(`<span class="hs-item"><b>★ ${nota}</b> no Google</span>`);
+  if (cli.numero) items.push(`<span class="hs-item"><b>${escapeHTML(cli.numero)}</b> ${escapeHTML(cli.rotulo || "clientes")}</span>`);
+  items.push(`<span class="hs-item"><b>Loja em ${escapeHTML(cidade)}</b></span>`);
+  box.innerHTML = items.join('<span class="hs-dot">·</span>');
+}
+
+/* ---------- Strip horizontal de marcas oficiais ---------- */
+function renderBrandStrip() {
+  const box = $("brandStripList");
+  if (!box) return;
+  const marcas = (state.store && state.store.marcas) || [];
+  if (!marcas.length) { box.parentElement.parentElement.hidden = true; return; }
+  box.innerHTML = marcas
+    .map((m) => `<button class="brand-strip-item" data-marca-strip="${escapeHTML(m)}">${escapeHTML(m)}</button>`)
+    .join("");
+}
+
+/* ---------- Seção "Mais procurados" (produtos com destaque=true) ---------- */
+function renderFeatured() {
+  const sec = $("featuredSection");
+  const grid = $("featuredGrid");
+  if (!sec || !grid) return;
+  const destaques = state.allProducts.filter((p) => p.destaque).slice(0, 4);
+  if (!destaques.length) { sec.hidden = true; return; }
+  sec.hidden = false;
+  grid.innerHTML = destaques.map((p) => featuredCardHTML(p)).join("");
+  grid.querySelectorAll(".feat-card").forEach((el) =>
+    el.addEventListener("click", () => openSheet(el.dataset.id, state.allProducts))
+  );
+}
+
+function featuredCardHTML(p) {
+  const off = p.precoDe ? Math.round((1 - p.preco / p.precoDe) * 100) : 0;
+  return `
+    <article class="feat-card" data-id="${escapeHTML(p.id)}">
+      ${mediaHTML(p, false)}
+      ${off > 0 ? `<span class="feat-off">-${off}%</span>` : ""}
+      <div class="feat-body">
+        <span class="feat-brand">${escapeHTML(p.marca)}</span>
+        <h3 class="feat-name">${escapeHTML(p.nome)}</h3>
+        <div class="feat-price">
+          <span class="now">${brl(p.preco)}</span>
+          ${p.precoDe ? `<span class="old">${brl(p.precoDe)}</span>` : ""}
+        </div>
+        <span class="feat-cta">Ver detalhes →</span>
+      </div>
+    </article>`;
+}
+
+/* ---------- Seção "Por que comprar na Villa Vip" ---------- */
+function renderTrustSection() {
+  const grid = $("trustGrid");
+  if (!grid) return;
+  const items = (state.store && Array.isArray(state.store.trust) && state.store.trust.length)
+    ? state.store.trust
+    : TRUST_DEFAULT;
+  grid.innerHTML = items.map((t) => `
+    <div class="trust-card">
+      <span class="trust-ico">${TRUST_ICONS[t.ico] || TRUST_ICONS.shield}</span>
+      <div>
+        <strong>${escapeHTML(t.titulo)}</strong>
+        <p>${escapeHTML(t.texto)}</p>
+      </div>
+    </div>
+  `).join("");
 }
 
 /* ---------- Prova social: avaliações Google + Instagram ---------- */
@@ -610,13 +781,20 @@ async function loadProducts() {
   grid.innerHTML = produtos
     .map((p) => {
       const wl = isWishlisted(p.id);
+      const off = p.precoDe ? Math.round((1 - p.preco / p.precoDe) * 100) : 0;
+      const tams = Array.isArray(p.tamanhos) ? p.tamanhos : [];
+      const tamsLabel = tams.length
+        ? (tams.length === 1 ? `Tam. ${tams[0]}` : `Tam. ${tams[0]} ao ${tams[tams.length - 1]}`)
+        : "";
       return `
-      <article class="card" data-id="${p.id}">
+      <article class="card${off ? " on-sale" : ""}" data-id="${p.id}">
         ${mediaHTML(p, true)}
+        ${off > 0 ? `<span class="badge-off">-${off}%</span>` : ""}
         <button class="btn-wish${wl ? " active" : ""}" data-wish="${p.id}" aria-label="${wl ? "Remover dos desejos" : "Salvar nos desejos"}">${HEART_SVG}</button>
         <div class="card-body">
           <span class="c-brand">${p.marca}</span>
           <h3 class="c-name">${p.nome}</h3>
+          ${tamsLabel ? `<span class="c-sizes">${tamsLabel}</span>` : ""}
           <div class="c-price">
             <span class="now">${brl(p.preco)}</span>
             ${p.precoDe ? `<span class="old">${brl(p.precoDe)}</span>` : ""}
@@ -643,36 +821,105 @@ async function loadProducts() {
 }
 
 /* ---------- Modal de produto ---------- */
-function openSheet(id, produtos) {
-  const p = produtos.find((x) => x.id === id);
+function openSheet(id, produtos, opts) {
+  // Aceita produtos vazio/parcial e cai pra lista completa
+  const pool = (produtos && produtos.length) ? produtos : state.allProducts;
+  const p = pool.find((x) => x.id === id) || state.allProducts.find((x) => x.id === id);
   if (!p) return;
   state.current = p;
   state.size = null;
   state.qty = 1;
 
-  $("sheetMedia").className = "sheet-media m-" + p.categoria + (p.imagem ? " has-img" : "");
-  $("sheetMedia").innerHTML = p.imagem
-    ? `<img class="sheet-img" src="${escapeHTML(p.imagem)}" alt="${escapeHTML(p.nome)}"
-         onerror="this.closest('.sheet-media').classList.remove('has-img')">
-       <span class="wm" aria-hidden="true">${BULL}</span>
-       <span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>
-       <span class="m-brand">${p.marca}</span>`
-    : `<span class="wm" aria-hidden="true">${BULL}</span>
-       <span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>
-       <span class="m-brand">${p.marca}</span>`;
+  // Deep link: atualiza URL/título sem recarregar (pula quando viemos do popstate/?p=)
+  if (!(opts && opts.skipHistory)) {
+    try {
+      const url = productUrl(p.id);
+      const replacing = location.search.startsWith("?p=");
+      const stateObj = { productId: p.id };
+      if (replacing) history.replaceState(stateObj, "", url);
+      else           history.pushState(stateObj, "", url);
+    } catch { /* ignora se browser bloquear */ }
+  }
+  document.title = `${p.nome} · ${state.store.nome}`;
+
+  // --- Mídia principal + galeria de thumbs reais ---
+  const galeria = Array.isArray(p.imagens) && p.imagens.length
+    ? p.imagens
+    : (p.imagem ? [p.imagem] : []);
+  const capa = galeria[0] || null;
+  renderSheetMainImage(p, capa);
+
+  // Thumbnails: reais quando há ≥2 fotos; decorativos quando só 1 (sugere galeria sem mentir muito)
+  const thumbsBox = $("sheetThumbs");
+  if (thumbsBox) {
+    if (galeria.length >= 2) {
+      thumbsBox.removeAttribute("aria-hidden");
+      thumbsBox.innerHTML = galeria.map((url, i) => `
+        <button type="button" class="sheet-thumb m-${p.categoria} has-img${i === 0 ? " active" : ""}" data-thumb="${i}">
+          <img src="${escapeHTML(url)}" alt="Foto ${i + 1}">
+        </button>`).join("");
+      thumbsBox.querySelectorAll("[data-thumb]").forEach((btn) =>
+        btn.addEventListener("click", () => {
+          const i = +btn.dataset.thumb;
+          renderSheetMainImage(p, galeria[i]);
+          thumbsBox.querySelectorAll(".sheet-thumb")
+            .forEach((t) => t.classList.toggle("active", t === btn));
+        })
+      );
+    } else {
+      thumbsBox.setAttribute("aria-hidden", "true");
+      thumbsBox.innerHTML = [0, 1, 2].map((i) => `
+        <div class="sheet-thumb m-${p.categoria}${i === 0 ? " active" : ""}${capa && i === 0 ? " has-img" : ""}">
+          ${capa && i === 0
+            ? `<img src="${escapeHTML(capa)}" alt="">`
+            : `<span class="cat-ico" aria-hidden="true">${catIcon(p.categoria)}</span>`}
+        </div>`).join("");
+    }
+  }
+
+  // --- Breadcrumb / referência ---
+  const catNome = (state.store.categorias.find((c) => c.id === p.categoria) || {}).nome || p.categoria;
+  $("sheetCat").textContent = catNome;
+  $("sheetRef").textContent = "REF #" + p.id;
+
   $("sheetBrand").textContent = p.marca;
   $("sheetName").textContent = p.nome;
-  $("sheetDesc").textContent = p.descricao;
+
+  // --- Chips de atributos por categoria ---
+  const attrs = CAT_ATTRS[p.categoria] || CAT_DEFAULT_ATTRS;
+  $("sheetChips").innerHTML = attrs.map((a) => `
+    <span class="sheet-chip">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg>
+      ${escapeHTML(a)}
+    </span>`).join("");
+
+  $("sheetDesc").textContent = p.descricao || "";
+
+  // --- Preço, parcelamento, economia ---
   $("sheetPrice").innerHTML = `
     <span class="now">${brl(p.preco)}</span>
     ${p.precoDe
       ? `<span class="old">${brl(p.precoDe)}</span>
-           <span class="off">-${Math.round((1 - p.preco / p.precoDe) * 100)}%</span>`
-      : ""
-    }`;
+         <span class="off">-${Math.round((1 - p.preco / p.precoDe) * 100)}%</span>`
+      : ""}`;
+
+  const parcela = p.preco / 3;
+  $("sheetInstallments").innerHTML = `ou <strong>3x de ${brl(parcela)}</strong> sem juros · à vista no PIX/dinheiro com a loja`;
+
+  const savings = $("sheetSavings");
+  if (p.precoDe && p.precoDe > p.preco) {
+    savings.innerHTML = `Você economiza <strong>${brl(p.precoDe - p.preco)}</strong>`;
+    savings.hidden = false;
+  } else {
+    savings.hidden = true;
+  }
+
+  // --- Tamanhos ---
+  const tams = Array.isArray(p.tamanhos) ? p.tamanhos : [];
   $("sizeReq").textContent = "— selecione";
   $("sizeReq").classList.remove("ok");
-  $("sizeGrid").innerHTML = p.tamanhos
+  $("sizeCount").textContent = tams.length ? `${tams.length} disponíve${tams.length === 1 ? "l" : "is"}` : "";
+  $("sizeGrid").innerHTML = tams
     .map((t) => `<button class="size-btn" data-size="${t}">${t}</button>`)
     .join("");
   $("sizeGrid")
@@ -687,11 +934,65 @@ function openSheet(id, produtos) {
         $("sizeReq").classList.add("ok");
       })
     );
+
+  // Link "não tem meu tamanho" pré-preenche WhatsApp
+  const sizeHelpMsg = encodeURIComponent(
+    `Olá, ${state.store.nome}! Vi no catálogo o produto *${p.nome}* (REF #${p.id}) e queria saber se tem em um tamanho que não aparece na lista. Pode me ajudar? 👢`
+  );
+  $("sizeHelp").href = `https://wa.me/${state.store.whatsapp}?text=${sizeHelpMsg}`;
+
   $("qtyValue").textContent = "1";
+
+  // --- Trust signals dentro do modal ---
+  const sp = (state.store && state.store.social) || {};
+  const g = sp.google || {};
+  const cli = sp.clientes || {};
+  const nota = g.nota ? Number(g.nota).toFixed(1).replace(".", ",") : null;
+  $("sheetTrust").innerHTML = `
+    <div class="st-row"><span class="st-ico">${TRUST_ICONS.shield}</span> <span>Marca oficial · produto novo e pronto pra entrega</span></div>
+    <div class="st-row"><span class="st-ico">${TRUST_ICONS.chat}</span> <span>Atendimento direto pelo WhatsApp da loja</span></div>
+    ${nota ? `<div class="st-row"><span class="st-ico">${TRUST_ICONS.star}</span> <span>${nota}★ no Google${cli.numero ? " · " + escapeHTML(cli.numero) + " " + escapeHTML(cli.rotulo || "clientes") : ""}</span></div>` : ""}
+  `;
+
+  // --- Wishlist ---
   const sw = $("btnSheetWish");
   sw.classList.toggle("active", isWishlisted(p.id));
   sw.setAttribute("aria-label", isWishlisted(p.id) ? "Remover dos desejos" : "Salvar nos desejos");
+
+  // --- Relacionados (mesma categoria, excluindo o atual) ---
+  renderRelated(p);
+
+  // Reset scroll do modal pro topo
+  const sheetEl = $("productSheet");
+  if (sheetEl) sheetEl.scrollTop = 0;
+
   openOverlay("sheetOverlay");
+}
+
+/** Renderiza até 6 produtos da mesma categoria abaixo do modal. */
+function renderRelated(produtoAtual) {
+  const sec = $("sheetRelated");
+  const grid = $("relatedGrid");
+  if (!sec || !grid) return;
+
+  const rel = state.allProducts
+    .filter((p) => p.categoria === produtoAtual.categoria && p.id !== produtoAtual.id)
+    .slice(0, 6);
+
+  if (!rel.length) { sec.hidden = true; return; }
+  sec.hidden = false;
+  grid.innerHTML = rel.map((p) => `
+    <article class="rel-card" data-id="${escapeHTML(p.id)}">
+      ${mediaHTML(p, false)}
+      <div class="rel-body">
+        <span class="rel-brand">${escapeHTML(p.marca)}</span>
+        <h4 class="rel-name">${escapeHTML(p.nome)}</h4>
+        <span class="rel-price">${brl(p.preco)}</span>
+      </div>
+    </article>`).join("");
+  grid.querySelectorAll(".rel-card").forEach((el) =>
+    el.addEventListener("click", () => openSheet(el.dataset.id, state.allProducts))
+  );
 }
 
 /* ---------- Geração do link dinâmico do WhatsApp ---------- */
@@ -947,6 +1248,48 @@ function openOverlay(id) {
 function closeOverlay(id) {
   $(id).hidden = true;
   document.body.style.overflow = "";
+  // Modal de produto: limpa deep link e restaura título quando fecha manualmente
+  if (id === "sheetOverlay" && state.current) {
+    state.current = null;
+    document.title = (state.store && state.store.nome)
+      ? `${state.store.nome} — Catálogo Digital`
+      : document.title;
+    if (location.search.startsWith("?p=")) {
+      try { history.replaceState({}, "", location.pathname); } catch {}
+    }
+  }
+}
+
+/* ---------- Compartilhamento do produto ---------- */
+async function shareCurrentProduct() {
+  if (!state.current) return;
+  const p = state.current;
+  const url = productUrl(p.id);
+  const title = `${p.nome} · ${state.store.nome}`;
+  const text = `Olha esse produto na ${state.store.nome}: ${p.nome} — ${brl(p.preco)}`;
+
+  const btn = $("btnSheetShare");
+  if (btn) { btn.classList.remove("flash"); void btn.offsetWidth; btn.classList.add("flash"); }
+
+  // Web Share API (mobile) — abre a planilha nativa de apps
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text, url });
+      return;
+    } catch (err) {
+      // Usuário cancelou — não cai no fallback, e não toast.
+      if (err && err.name === "AbortError") return;
+    }
+  }
+
+  // Fallback: copia o link pro clipboard
+  try {
+    await navigator.clipboard.writeText(url);
+    flash("Link copiado! Cole e envie pra quem você quiser ✨");
+  } catch {
+    // Último recurso: prompt para o usuário copiar manualmente
+    window.prompt("Copie o link abaixo:", url);
+  }
 }
 let toastT;
 function flash(msg) {
@@ -964,8 +1307,47 @@ function pulseSizes() {
 }
 let searchT;
 
+/** Aplica filtro de categoria + scroll para o grid. Usado pelos CTAs do hero. */
+function jumpToCategory(catId) {
+  const found = (state.store.categorias || []).find((c) => c.id === catId);
+  state.categoria = found ? catId : "todos";
+  $("categories")
+    .querySelectorAll(".cat-pill")
+    .forEach((x) => x.classList.toggle("active", x.dataset.cat === state.categoria));
+  loadProducts();
+  const main = document.querySelector(".catalog");
+  if (main) main.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/** Aplica filtro por uma marca específica (toggle) e rola para o grid. */
+function jumpToBrand(marca) {
+  if (state.marcas.has(marca)) {
+    state.marcas.delete(marca);
+  } else {
+    state.marcas.add(marca);
+  }
+  $("brandChips")
+    .querySelectorAll(".brand-chip")
+    .forEach((x) => x.classList.toggle("active", state.marcas.has(x.dataset.marca)));
+  loadProducts();
+  const main = document.querySelector(".catalog");
+  if (main) main.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 /* ---------- Eventos ---------- */
 function bindEvents() {
+  // CTAs do hero (Ver botas / Ver chapéus)
+  document.querySelectorAll("[data-go-cat]").forEach((btn) =>
+    btn.addEventListener("click", () => jumpToCategory(btn.dataset.goCat))
+  );
+
+  // Strip de marcas (clique em uma marca filtra)
+  const bs = $("brandStripList");
+  if (bs) bs.addEventListener("click", (e) => {
+    const item = e.target.closest("[data-marca-strip]");
+    if (item) jumpToBrand(item.dataset.marcaStrip);
+  });
+
   $("categories").addEventListener("click", (e) => {
     const b = e.target.closest(".cat-pill");
     if (!b) return;
@@ -1050,6 +1432,12 @@ function bindEvents() {
   $("btnSheetWish").addEventListener("click", () => {
     if (state.current) toggleWishlist(state.current);
   });
+
+  // Sheet — botão de compartilhar
+  if ($("btnSheetShare")) $("btnSheetShare").addEventListener("click", shareCurrentProduct);
+
+  // Back/forward do browser sincroniza com o modal
+  window.addEventListener("popstate", maybeOpenFromUrl);
 
   // Lista de desejos
   $("wishlistToggle").addEventListener("click", () => {
