@@ -50,7 +50,10 @@
 }
 
 html {
-  -webkit-text-size-adjust: 100%
+  -webkit-text-size-adjust: 100%;
+  /* clip (não hidden) esconde o estouro horizontal sem transformar a página
+     em contêiner de scroll — preserva sticky/compositing no Chrome Android */
+  overflow-x: clip;
 }
 
 body {
@@ -59,7 +62,10 @@ body {
   color: var(--ink);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  /* Antes: overflow-x: hidden — causava rastro/duplicação de repaint no
+     Chrome Android (body virava scroller e quebrava o header sticky).
+     clip resolve sem criar contexto de scroll. */
+  overflow-x: clip;
 }
 
 img,
