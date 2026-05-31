@@ -91,14 +91,7 @@ const CAT_ATTRS = {
 };
 const CAT_DEFAULT_ATTRS = ["Marca Oficial", "Pronta Entrega", "Atendimento Direto"];
 
-/* ---------- Trust signals (home + modal) — fallback default. store.json pode sobrescrever ---------- */
-const TRUST_DEFAULT = [
-  { ico: "store",    titulo: "Loja física em Mogi Mirim/SP", texto: "5 anos no mercado country" },
-  { ico: "truck",    titulo: "Enviamos para todo o Brasil",  texto: "Combine o frete pelo WhatsApp" },
-  { ico: "chat",     titulo: "Atendimento humano",           texto: "Você fala direto com a loja" },
-  { ico: "shield",   titulo: "Marcas oficiais",              texto: "Eldorado, TX Farm, Tomahawk e mais" },
-];
-
+/* ---------- Trust signals (modal do produto) — ícones ---------- */
 const TRUST_ICONS = {
   store:  '<svg viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9M3 9v11h18V9M3 9h18M8 14h8"/></svg>',
   truck:  '<svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 11h5l2 3v2h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>',
@@ -267,9 +260,6 @@ function renderChrome() {
   // Seção de destaques (Mais procurados)
   renderFeatured();
 
-  // Seção "Por que comprar"
-  renderTrustSection();
-
   // Prova social: avaliações do Google + clientes + Instagram
   renderSocialProof();
 
@@ -335,24 +325,6 @@ function featuredCardHTML(p) {
         <span class="feat-cta">Ver detalhes →</span>
       </div>
     </article>`;
-}
-
-/* ---------- Seção "Por que comprar na Villa Vip" ---------- */
-function renderTrustSection() {
-  const grid = $("trustGrid");
-  if (!grid) return;
-  const items = (state.store && Array.isArray(state.store.trust) && state.store.trust.length)
-    ? state.store.trust
-    : TRUST_DEFAULT;
-  grid.innerHTML = items.map((t) => `
-    <div class="trust-card">
-      <span class="trust-ico">${TRUST_ICONS[t.ico] || TRUST_ICONS.shield}</span>
-      <div>
-        <strong>${escapeHTML(t.titulo)}</strong>
-        <p>${escapeHTML(t.texto)}</p>
-      </div>
-    </div>
-  `).join("");
 }
 
 /* ---------- Prova social: avaliações Google + Instagram ---------- */
