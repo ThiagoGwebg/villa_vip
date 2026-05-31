@@ -1227,7 +1227,7 @@ function renderWishlist() {
     .map(
       (item, idx) => `
       <div class="ci">
-        <div class="ci-thumb m-${item.categoria}">${catIcon(item.categoria)}</div>
+        <div class="ci-thumb${item.imagem ? "" : ` m-${item.categoria}`}">${item.imagem ? `<img src="${escapeHTML(item.imagem)}" alt="" loading="lazy">` : catIcon(item.categoria)}</div>
         <div class="ci-info">
           <b>${escapeHTML(item.nome)}</b>
           <small>${escapeHTML(item.marca)}</small>
@@ -1280,6 +1280,7 @@ function addToCart() {
         size: state.size,
         preco: p.preco,
         qty: state.qty,
+        imagem: coverImage(p) || null,
       },
     });
   }
@@ -1295,6 +1296,7 @@ function addToCart() {
       size: state.size,
       preco: p.preco,
       qty: state.qty,
+      imagem: coverImage(p) || null,
     });
   saveCart();
   closeOverlay("sheetOverlay");
@@ -1311,7 +1313,7 @@ function renderCart() {
     .map(
       (i, idx) => `
       <div class="ci">
-        <div class="ci-thumb m-${i.categoria}">${catIcon(i.categoria)}</div>
+        <div class="ci-thumb${i.imagem ? "" : ` m-${i.categoria}`}">${i.imagem ? `<img src="${escapeHTML(i.imagem)}" alt="" loading="lazy">` : catIcon(i.categoria)}</div>
         <div class="ci-info">
           <b>${i.nome}</b>
           <small>${i.marca} · Tam ${i.size} · Qtd ${i.qty}</small>

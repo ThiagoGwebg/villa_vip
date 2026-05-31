@@ -1238,6 +1238,13 @@ select {
   stroke-width: 1.6
 }
 
+.ci-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px
+}
+
 .ci-info {
   flex: 1;
   min-width: 0
