@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Equipe · Villa Vip</title>
+  <meta name="robots" content="noindex">
+  <link rel="shortcut icon" href="/assets/logo-mark.svg" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+
+<body class="dash">
+  <!-- Top-bar e blocos de estado são injetados por js/core/partials.js -->
+  <main class="dash-main" id="dashMain" aria-busy="true">
+
+    <div id="pageContent" hidden>
+      <section class="dash-head pe-head">
+        <div>
+          <h1>Equipe</h1>
+          <p id="adminCount">—</p>
+        </div>
+      </section>
+
+      <!-- Form: promover admin -->
+      <article class="card span-12">
+        <header class="card-h">
+          <h2>Adicionar administrador</h2>
+          <span class="card-sub">Promove um usuário cadastrado a admin</span>
+        </header>
+        <form id="promoteForm" class="pe-form" novalidate style="padding:0">
+          <div class="pe-row">
+            <div class="pe-field" style="flex:1">
+              <label for="fEmail">E-mail do usuário</label>
+              <input type="email" id="fEmail" placeholder="nome@dominio.com" required autocomplete="off">
+              <small class="pe-hint">A pessoa precisa ter criado conta em <code>/register</code> antes.</small>
+            </div>
+          </div>
+          <footer class="pe-form-foot" style="border:0; padding:0">
+            <p class="pe-form-msg" id="promoteMsg" hidden></p>
+            <button type="submit" class="dash-btn solid" id="promoteSubmit">Promover a admin</button>
+          </footer>
+        </form>
+      </article>
+
+      <!-- Lista de admins -->
+      <div class="pe-table-wrap" style="margin-top:24px">
+        <div class="table-scroll">
+          <table class="dash-table pe-table">
+            <thead>
+              <tr>
+                <th>E-mail</th>
+                <th>Nome</th>
+                <th>Desde</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="adminsBody"></tbody>
+          </table>
+        </div>
+        <p class="pe-empty" id="emptyMsg" hidden>Nenhum admin cadastrado.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/core/shared.js"></script>
+  <script src="/js/core/partials.js"></script>
+  <script src="/js/core/admin-shell.js"></script>
+  <script>
+    (function boot() {
+      VV.partials.adminTopbar({ subtitle: "Equipe" });
+      VV.partials.adminStates();
+      VV.adminShell.mount({ active: "equipe" });
+    })();
+  </script>
+  <script src="/js/admin/equipe-admin.js"></script>
+</body>
+</html>

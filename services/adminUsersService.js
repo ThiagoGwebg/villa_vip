@@ -4,7 +4,7 @@ const supabase = require('../config/supabase');
  * Gestão de admins da loja.
  *
  * Lê e atualiza a flag `profiles.admin`. O usuário precisa já existir
- * (cadastrado via /register.html → linha em `auth.users` espelhada em
+ * (cadastrado via /register → linha em `auth.users` espelhada em
  * `profiles` pelo trigger handle_new_user).
  */
 

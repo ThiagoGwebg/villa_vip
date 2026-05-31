@@ -25,7 +25,7 @@ router.post('/promote', writeLimiter,
       const updated = await adminUsers.promote(req.body?.email);
       if (!updated) {
         return res.status(404).json({
-          message: 'Esse e-mail não está cadastrado. Peça pra pessoa criar conta em /register.html primeiro.',
+          message: 'Esse e-mail não está cadastrado. Peça pra pessoa criar conta em /register primeiro.',
         });
       }
       res.json(updated);

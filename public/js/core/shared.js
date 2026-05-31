@@ -33,7 +33,7 @@
       localStorage.removeItem("token");
       localStorage.removeItem("user");
     } catch { /* ignore */ }
-    const to = opts.to || (opts.silent ? null : "/login.html");
+    const to = opts.to || (opts.silent ? null : "/login");
     if (to) window.location.replace(to);
   };
 
@@ -44,7 +44,7 @@
      ------------------------------------------------------------------- */
   VV.guard = (opts = {}) => {
     if (!VV.token()) {
-      window.location.replace("/login.html");
+      window.location.replace("/login");
       return null;
     }
     const u = VV.user();
@@ -71,7 +71,7 @@
     }
     const res = await fetch(url, { ...opts, headers });
     if (res.status === 401) {
-      VV.logout({ to: "/login.html" });
+      VV.logout({ to: "/login" });
       throw new Error("Sessão expirada");
     }
     if (res.status === 403 && typeof opts.onForbidden === "function") {

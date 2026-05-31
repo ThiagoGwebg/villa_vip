@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedidos · Villa Vip</title>
+  <meta name="robots" content="noindex">
+  <link rel="shortcut icon" href="/assets/logo-mark.svg" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+
+<body class="dash">
+
+  <!-- Top-bar e blocos de estado são injetados por js/core/partials.js -->
+  <main class="dash-main" id="dashMain" aria-busy="true">
+
+    <div id="pageContent" hidden>
+
+      <section class="dash-head pe-head">
+        <div>
+          <h1>Pedidos</h1>
+          <p id="ordersCount">—</p>
+        </div>
+        <div class="pe-toolbar">
+          <input class="pe-search" id="searchInput" type="search"
+                 placeholder="Buscar por cliente, e-mail ou ID…" aria-label="Buscar pedido">
+          <select class="pe-select" id="statusFilter" aria-label="Filtrar por status">
+            <option value="">Todos os status</option>
+            <option value="enviado">Enviado</option>
+            <option value="em_andamento">Em andamento</option>
+            <option value="concluido">Concluído</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+          <button type="button" class="dash-btn ghost" id="btnExport" title="Exportar CSV">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Exportar CSV</span>
+          </button>
+        </div>
+      </section>
+
+      <div class="pe-table-wrap">
+        <div class="table-scroll">
+          <table class="dash-table pe-table" id="ordersTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Itens</th>
+                <th class="num">Total</th>
+                <th>Status</th>
+                <th>Recebido em</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="ordersBody"></tbody>
+          </table>
+        </div>
+        <p class="pe-empty" id="emptyMsg" hidden>Nenhum pedido encontrado.</p>
+        <div class="vv-pager" id="pager" hidden>
+          <button type="button" class="dash-btn ghost dark" id="pgPrev">‹ Anterior</button>
+          <span class="vv-pager-info" id="pgInfo">—</span>
+          <button type="button" class="dash-btn ghost dark" id="pgNext">Próximo ›</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Modal: detalhe do pedido -->
+  <div class="pe-overlay" id="detailOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <div class="pe-modal">
+      <header class="pe-modal-head">
+        <h2 id="detailTitle">Pedido</h2>
+        <button class="pe-modal-close" id="detailClose" type="button" aria-label="Fechar">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+      </header>
+      <div class="pe-form" id="detailBody"></div>
+    </div>
+  </div>
+
+  <script src="/js/core/shared.js"></script>
+  <script src="/js/core/partials.js"></script>
+  <script src="/js/core/admin-shell.js"></script>
+  <script>
+    (function boot() {
+      const P = VV.partials;
+      P.adminTopbar({
+        subtitle: "Pedidos",
+        actions: [
+          P.actionLink("/admin", "Inteligência", "intelligence", { title: "Painel de inteligência" }),
+          P.actionLink("/admin/produtos", "Produtos", "products", { title: "Editor de produtos" }),
+          P.actionButton("btnRefresh", "Atualizar", "refresh", { title: "Atualizar" }),
+        ],
+      });
+      P.adminStates({ loadingText: "Carregando pedidos…", errorText: "Não foi possível carregar os pedidos." });
+      VV.adminShell.mount({ active: "pedidos" });
+    })();
+  </script>
+  <script src="/js/admin/pedidos-admin.js"></script>
+</body>
+
+</html>
