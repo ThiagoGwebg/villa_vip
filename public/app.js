@@ -452,10 +452,15 @@ function loadInstagramEmbeds() {
   document.body.appendChild(s);
 }
 
-/* ---------- Carrossel de avaliações: passa comentário por comentário, sozinho ---------- */
+/* ---------- Carrossel de avaliações: passa comentário por comentário, sozinho ----------
+   Animação feita em JS (requestAnimationFrame) e não via CSS transition, de propósito:
+   o CSS tem `prefers-reduced-motion → transition:none !important`, que mataria o deslize.
+   Aqui o movimento roda independente disso. */
+let reviewRAF = 0;
 let reviewTimer = 0;
 let reviewResizeHandler = null;
 function startReviewMarquee() {
+  cancelAnimationFrame(reviewRAF);
   clearTimeout(reviewTimer);
   if (reviewResizeHandler) {
     window.removeEventListener("resize", reviewResizeHandler);
@@ -471,47 +476,59 @@ function startReviewMarquee() {
   if (cards.length < 2) return;
   const total = Math.max(1, Math.floor(cards.length / 2));
 
-  // Respeita quem pede menos movimento: deixa parado no primeiro comentário
-  const reduce =
-    window.matchMedia &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  track.style.transition = "none"; // nunca usamos transição CSS aqui
 
-  const DWELL = 3400; // tempo parado em cada comentário (ms)
-  const SLIDE = 750;  // duração do deslize suave entre comentários (ms)
-  const EASE = "cubic-bezier(.22,.61,.36,1)"; // easing clean (saída suave)
+  const DWELL = 3000; // tempo parado em cada comentário (ms)
+  const SLIDE = 700;  // duração do deslize suave entre comentários (ms)
+  const START_DELAY = 1200; // 1ª troca não demora tanto a aparecer
 
-  let index = 0;
+  let index = 0;     // card atualmente à esquerda
   let paused = false;
 
-  // Passo = largura de 1 card + gap (recalculado a cada uso para sobreviver a resize)
+  // Passo = largura de 1 card + gap (recalculado para sobreviver a resize)
   function stepSize() {
     const cs = getComputedStyle(track);
     const gap = parseFloat(cs.columnGap || cs.gap) || 14;
     return cards[0].getBoundingClientRect().width + gap;
   }
+  function setX(px) {
+    track.style.transform = `translate3d(${-px}px,0,0)`;
+  }
+  // Easing clean: acelera e desacelera suave (easeInOutQuad)
+  const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 
-  function placeAt(i, animate) {
-    track.style.transition = animate ? `transform ${SLIDE}ms ${EASE}` : "none";
-    track.style.transform = `translate3d(${-(i * stepSize())}px,0,0)`;
+  function animateTo(target) {
+    const step = stepSize();
+    const fromX = index * step;
+    const toX = target * step;
+    const start = performance.now();
+    function frame(now) {
+      const t = Math.min(1, (now - start) / SLIDE);
+      setX(fromX + (toX - fromX) * ease(t));
+      if (t < 1) {
+        reviewRAF = requestAnimationFrame(frame);
+      } else {
+        index = target;
+        // Chegou ao início da cópia: volta ao começo sem emenda (conteúdo idêntico)
+        if (index >= total) {
+          index = 0;
+          setX(0);
+        }
+        schedule();
+      }
+    }
+    reviewRAF = requestAnimationFrame(frame);
   }
 
-  function next() {
-    if (reduce) return;
+  function schedule() {
+    reviewTimer = setTimeout(tick, DWELL);
+  }
+  function tick() {
     if (paused || document.hidden) {
-      reviewTimer = setTimeout(next, DWELL);
+      schedule(); // espera sem avançar; não "pula" comentários
       return;
     }
-    index += 1;
-    placeAt(index, true);
-
-    // Ao alcançar o início da cópia, volta ao começo sem emenda (mesmo conteúdo visível)
-    if (index >= total) {
-      setTimeout(() => {
-        index = 0;
-        placeAt(0, false);
-      }, SLIDE + 30);
-    }
-    reviewTimer = setTimeout(next, DWELL + SLIDE);
+    animateTo(index + 1);
   }
 
   // Pausa ao interagir; retoma sozinho ao sair
@@ -520,12 +537,12 @@ function startReviewMarquee() {
   marquee.addEventListener("focusin", () => (paused = true));
   marquee.addEventListener("focusout", () => (paused = false));
 
-  // Reposiciona sem animação se a tela mudar de tamanho (mantém o card alinhado)
-  reviewResizeHandler = () => placeAt(index, false);
+  // Reposiciona (sem animar) se a tela mudar de tamanho — mantém o card alinhado
+  reviewResizeHandler = () => setX(index * stepSize());
   window.addEventListener("resize", reviewResizeHandler);
 
-  placeAt(0, false);
-  if (!reduce) reviewTimer = setTimeout(next, DWELL);
+  setX(0);
+  reviewTimer = setTimeout(tick, START_DELAY);
 }
 
 /* ---------- Autenticação UI ---------- */
