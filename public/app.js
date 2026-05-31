@@ -185,6 +185,9 @@ async function init() {
   updateWishlistBadge();
   await loadFromServer();
 
+  // Se a pessoa tentou favoritar/sacolar sem login, aplica a ação agora que voltou logada
+  applyPendingAction();
+
   // Deep link: ?p=ID abre o modal direto (compartilhamento + recarregar página)
   maybeOpenFromUrl();
 }
@@ -1066,6 +1069,63 @@ async function syncToServer() {
   }
 }
 
+/* ---------- Gate de login para salvar itens (favoritos / sacola) ---------- */
+const PENDING_KEY = "vv_pending_action";
+
+/**
+ * Guarda a intenção (favoritar ou colocar na sacola) e manda a pessoa pro login.
+ * Retorna false para a ação atual ser adiada — ela é reaplicada após o login.
+ */
+function redirectToLogin(intent) {
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(intent));
+  } catch {
+    /* localStorage cheio/indisponível: segue pro login mesmo assim */
+  }
+  flash("Entre na sua conta para salvar seus itens 🔒");
+  setTimeout(() => {
+    window.location.href = "/login.html";
+  }, 900);
+  return false;
+}
+
+/**
+ * Reaplica a ação que ficou pendente antes do login (chamada no boot, já logado).
+ * O item vai pra sacola/favoritos da pessoa e sincroniza com o servidor.
+ */
+function applyPendingAction() {
+  if (!state.user) return;
+
+  let intent;
+  try {
+    const raw = localStorage.getItem(PENDING_KEY);
+    if (!raw) return;
+    intent = JSON.parse(raw);
+  } catch {
+    localStorage.removeItem(PENDING_KEY);
+    return;
+  }
+  localStorage.removeItem(PENDING_KEY);
+  if (!intent || !intent.type) return;
+
+  if (intent.type === "wishlist" && intent.product) {
+    const p = intent.product;
+    if (!isWishlisted(p.id)) {
+      state.wishlist.push(p);
+      saveWishlist();
+      syncWishIcons(p.id);
+    }
+    flash("Salvo na lista de desejos ♥");
+  } else if (intent.type === "cart" && intent.item) {
+    const item = intent.item;
+    const found = state.cart.find((i) => i.key === item.key);
+    if (found) found.qty += item.qty;
+    else state.cart.push(item);
+    saveCart();
+    flash("Adicionado à sacola 🛍️");
+  }
+}
+
 /* ---------- Lista de Desejos ---------- */
 function saveWishlist() {
   localStorage.setItem("vv_wishlist", JSON.stringify(state.wishlist));
@@ -1082,6 +1142,23 @@ function isWishlisted(id) {
   return state.wishlist.some((i) => i.id === id);
 }
 function toggleWishlist(p) {
+  // Sem login: guarda a intenção e manda pro login antes de salvar
+  if (!state.user) {
+    return redirectToLogin({
+      type: "wishlist",
+      product: {
+        id: p.id,
+        nome: p.nome,
+        marca: p.marca,
+        categoria: p.categoria,
+        preco: p.preco,
+        precoDe: p.precoDe || null,
+        imagem: p.imagem || null,
+        tag: p.tag || null,
+        tamanhos: p.tamanhos || [],
+      },
+    });
+  }
   const idx = state.wishlist.findIndex((i) => i.id === p.id);
   if (idx >= 0) {
     state.wishlist.splice(idx, 1);
@@ -1165,6 +1242,22 @@ function addToCart() {
     return;
   }
   const key = p.id + "|" + state.size;
+  // Sem login: guarda o item escolhido e manda pro login antes de sacolar
+  if (!state.user) {
+    return redirectToLogin({
+      type: "cart",
+      item: {
+        key,
+        id: p.id,
+        nome: p.nome,
+        marca: p.marca,
+        categoria: p.categoria,
+        size: state.size,
+        preco: p.preco,
+        qty: state.qty,
+      },
+    });
+  }
   const found = state.cart.find((i) => i.key === key);
   if (found) found.qty += state.qty;
   else
