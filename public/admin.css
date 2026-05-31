@@ -1422,6 +1422,94 @@
 .pe-img-status.ok   { background: rgba(58,154,92,.07); border-color: rgba(58,154,92,.3); color: #2e7d50; }
 .pe-img-status.error{ background: rgba(178,59,46,.07); border-color: rgba(178,59,46,.3); color: var(--ds-discount); }
 
+/* ---------- Galeria de fotos (múltiplas imagens) ----------------------- */
+.pe-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+.pe-thumb {
+  position: relative;
+  aspect-ratio: 1/1;
+  border-radius: var(--ds-r);
+  overflow: hidden;
+  border: 1px solid var(--ds-line-strong);
+  background: var(--ds-surface-2);
+}
+.pe-thumb.is-cover {
+  border-color: var(--ds-orange);
+  box-shadow: 0 0 0 2px rgba(226,100,28,.18);
+}
+.pe-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.pe-thumb-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: var(--ds-orange);
+  color: #fff;
+  font-family: "Oswald", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  z-index: 2;
+}
+.pe-thumb-actions {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  padding: 6px 4px;
+  background: linear-gradient(to top, rgba(0,0,0,.65), transparent);
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+.pe-thumb:hover .pe-thumb-actions,
+.pe-thumb:focus-within .pe-thumb-actions { opacity: 1; }
+.pe-thumb-btn {
+  background: rgba(255,255,255,.92);
+  color: #1c130b;
+  border: 0;
+  border-radius: 4px;
+  width: 26px;
+  height: 26px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background .15s ease;
+}
+.pe-thumb-btn:hover { background: #fff; }
+.pe-thumb-btn.danger { background: rgba(255,255,255,.92); color: var(--ds-discount); }
+.pe-thumb-btn.danger:hover { background: var(--ds-discount); color: #fff; }
+
+/* Drop compacto quando já há fotos na galeria */
+.pe-img-drop--compact {
+  padding: 14px 18px;
+  flex-direction: row;
+  gap: 10px;
+}
+.pe-img-drop--compact svg { margin-bottom: 0; width: 22px; height: 22px; }
+.pe-img-drop--compact small { display: none; }
+
+/* Botão "Adicionar" ao lado da URL */
+.pe-img-url-add {
+  height: 38px;
+  padding: 0 14px;
+  font-size: 12px;
+  flex: 0 0 auto;
+}
+
 /* ---------- Responsivo ------------------------------------------------- */
 @media (max-width: 720px) {
   .pe-head { flex-direction: column; gap: 16px; }

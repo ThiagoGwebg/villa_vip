@@ -28,6 +28,12 @@
     "TX Farm",
     "Austin Western"
   ],
+  "trust": [
+    { "ico": "store",  "titulo": "Loja física em Mogi Mirim/SP", "texto": "5 anos no mercado country" },
+    { "ico": "truck",  "titulo": "Enviamos para todo o Brasil",  "texto": "Combine o frete pelo WhatsApp" },
+    { "ico": "chat",   "titulo": "Atendimento humano",           "texto": "Você fala direto com a loja" },
+    { "ico": "shield", "titulo": "Marcas oficiais",              "texto": "Eldorado, TX Farm, Tomahawk e mais" }
+  ],
   "social": {
     "clientes": {
       "numero": "+2.000",
