@@ -1109,7 +1109,7 @@ function redirectToLogin(intent) {
   }
   flash("Entre na sua conta para salvar seus itens 🔒");
   setTimeout(() => {
-    window.location.href = "/login.html";
+    window.location.href = "/login";
   }, 900);
   return false;
 }

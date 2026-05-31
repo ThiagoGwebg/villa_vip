@@ -10,9 +10,9 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"
     rel="stylesheet" />
-  <link rel="shortcut icon" href="assets/logo-mark.svg" type="image/x-icon">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="auth.css">
+  <link rel="shortcut icon" href="/assets/logo-mark.svg" type="image/x-icon">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/auth.css">
 </head>
 
 <body class="auth-page">
@@ -59,7 +59,7 @@
       <button type="submit" class="auth-btn">CADASTRAR</button>
     </form>
 
-    <p class="auth-link">Já possui uma conta? <a href="login.html">Faça login</a></p>
+    <p class="auth-link">Já possui uma conta? <a href="/login">Faça login</a></p>
   </main>
 
   <script>
@@ -107,7 +107,7 @@
           msgBox.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> <span>${data.message || 'Conta criada! Confirme seu e-mail.'}</span>`;
           msgBox.hidden = false;
           setTimeout(() => {
-            window.location.href = 'login.html';
+            window.location.href = '/login';
           }, 3500);
         } else {
           msgBox.className = "auth-msg error";

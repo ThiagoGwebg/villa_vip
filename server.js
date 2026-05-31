@@ -507,28 +507,39 @@ app.delete('/api/admin/products/:id', authMiddleware, adminMiddleware, writeLimi
    Rotas HTML para os painéis. Como o vercel.json roteia tudo pra esta
    função, precisamos servir o HTML diretamente aqui em prod e em dev.
 ----------------------------------------------------------------------- */
+const ADMIN_DIR = path.join(PUBLIC_DIR, 'pages', 'admin');
+const PAGES_DIR = path.join(PUBLIC_DIR, 'pages');
+
+app.get(['/login'], (_req, res) => {
+  res.sendFile(path.join(PAGES_DIR, 'login.html'));
+});
+
+app.get(['/register', '/cadastro'], (_req, res) => {
+  res.sendFile(path.join(PAGES_DIR, 'register.html'));
+});
+
 app.get(['/admin', '/dashboard'], (_req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, 'admin.html'));
+  res.sendFile(path.join(ADMIN_DIR, 'admin.html'));
 });
 
 app.get(['/admin/produtos', '/editor-produtos'], (_req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, 'products-admin.html'));
+  res.sendFile(path.join(ADMIN_DIR, 'products-admin.html'));
 });
 
 app.get(['/admin/pedidos'], (_req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, 'pedidos-admin.html'));
+  res.sendFile(path.join(ADMIN_DIR, 'pedidos-admin.html'));
 });
 
 app.get(['/admin/loja', '/admin/loja/:tab'], (_req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, 'loja-admin.html'));
+  res.sendFile(path.join(ADMIN_DIR, 'loja-admin.html'));
 });
 
 app.get(['/admin/auditoria'], (_req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, 'auditoria-admin.html'));
+  res.sendFile(path.join(ADMIN_DIR, 'auditoria-admin.html'));
 });
 
 app.get(['/admin/equipe'], (_req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, 'equipe-admin.html'));
+  res.sendFile(path.join(ADMIN_DIR, 'equipe-admin.html'));
 });
 
 // SPA fallback — qualquer rota não-API entrega o catálogo.

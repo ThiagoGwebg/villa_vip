@@ -10,47 +10,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css">
-  <link rel="stylesheet" href="/admin.css">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/admin.css">
 </head>
 
 <body class="dash">
-  <header class="dash-top">
-    <div class="dash-top-wrap">
-      <a class="dash-brand" href="/" title="Voltar ao catálogo">
-        <svg class="dash-longhorn" viewBox="0 0 240 200" aria-hidden="true">
-          <path fill="currentColor" d="M120 80C104 82 80 80 58 72C38 64 22 50 14 36C26 46 48 52 70 52C92 52 110 60 120 78C130 60 148 52 170 52C192 52 214 46 226 36C218 50 202 64 182 72C160 80 136 82 120 80Z" />
-          <path fill="currentColor" d="M78 84 L120 170 L162 84 L139 84 L120 126 L101 84 Z" />
-        </svg>
-        <span><strong>Villa Vip</strong><small>Equipe</small></span>
-      </a>
-      <div class="dash-top-actions">
-        <span class="dash-stamp" id="stamp">Carregando…</span>
-        <div class="dash-user">
-          <span class="dash-avatar" id="userInitial">V</span>
-          <span class="dash-uname" id="userName">—</span>
-        </div>
-        <button type="button" class="dash-btn ghost" id="btnLogout">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
-          <span>Sair</span>
-        </button>
-      </div>
-    </div>
-  </header>
-
+  <!-- Top-bar e blocos de estado são injetados por js/core/partials.js -->
   <main class="dash-main" id="dashMain" aria-busy="true">
-    <div class="dash-state" id="loadingState"><div class="dash-spinner" aria-hidden="true"></div><p>Carregando…</p></div>
-    <div class="dash-state err" id="errorState" hidden>
-      <p id="errorMsg">Não foi possível carregar.</p>
-      <button type="button" class="dash-btn solid" id="btnRetry">Tentar novamente</button>
-    </div>
-    <div class="dash-state err" id="denyState" hidden>
-      <p><strong>Acesso restrito a administradores</strong></p>
-      <div class="dash-state-actions">
-        <a class="dash-btn ghost dark" href="/">Voltar ao catálogo</a>
-        <button type="button" class="dash-btn solid" id="btnDenyLogout">Trocar de conta</button>
-      </div>
-    </div>
 
     <div id="pageContent" hidden>
       <section class="dash-head pe-head">
@@ -71,7 +37,7 @@
             <div class="pe-field" style="flex:1">
               <label for="fEmail">E-mail do usuário</label>
               <input type="email" id="fEmail" placeholder="nome@dominio.com" required autocomplete="off">
-              <small class="pe-hint">A pessoa precisa ter criado conta em <code>/register.html</code> antes.</small>
+              <small class="pe-hint">A pessoa precisa ter criado conta em <code>/register</code> antes.</small>
             </div>
           </div>
           <footer class="pe-form-foot" style="border:0; padding:0">
@@ -101,18 +67,16 @@
     </div>
   </main>
 
-  <script src="/shared.js"></script>
-  <script src="/admin-shell.js"></script>
+  <script src="/js/core/shared.js"></script>
+  <script src="/js/core/partials.js"></script>
+  <script src="/js/core/admin-shell.js"></script>
   <script>
-    (function greet() {
-      const u = VV.user();
-      if (u && u.nome) {
-        document.getElementById("userName").textContent = u.nome;
-        document.getElementById("userInitial").textContent = u.nome.trim().charAt(0).toUpperCase() || "V";
-      }
+    (function boot() {
+      VV.partials.adminTopbar({ subtitle: "Equipe" });
+      VV.partials.adminStates();
       VV.adminShell.mount({ active: "equipe" });
     })();
   </script>
-  <script src="/equipe-admin.js"></script>
+  <script src="/js/admin/equipe-admin.js"></script>
 </body>
 </html>

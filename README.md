@@ -44,7 +44,7 @@ dinâmico do WhatsApp com a mensagem pronta** — o "gancho de conversão" do pr
 4. Copie do painel **Project Settings → API**:
    - `Project URL` → `SUPABASE_URL`
    - `service_role` key → `SUPABASE_KEY`
-5. Após criar sua conta pelo `/register.html`, promova-se a admin no SQL Editor:
+5. Após criar sua conta pelo `/register`, promova-se a admin no SQL Editor:
    ```sql
    update profiles set admin = true where email = 'seu-email@dominio.com';
    ```
