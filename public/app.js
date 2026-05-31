@@ -452,38 +452,67 @@ function loadInstagramEmbeds() {
   document.body.appendChild(s);
 }
 
-/* ---------- Carrossel de avaliações (motor em JS, roda sozinho) ---------- */
-let reviewRAF = 0;
+/* ---------- Carrossel de avaliações: passa comentário por comentário, sozinho ---------- */
+let reviewTimer = 0;
+let reviewResizeHandler = null;
 function startReviewMarquee() {
-  cancelAnimationFrame(reviewRAF);
+  clearTimeout(reviewTimer);
+  if (reviewResizeHandler) {
+    window.removeEventListener("resize", reviewResizeHandler);
+    reviewResizeHandler = null;
+  }
+
   const marquee = document.querySelector(".rev-marquee");
   const track = marquee && marquee.querySelector(".rev-track");
   if (!track) return;
 
-  // Respeita usuários que pedem menos movimento — nada de marquee animado
-  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    return;
-  }
+  // O track é duplicado (conjunto real + cópia aria-hidden) → metade é o nº real de cards
+  const cards = track.querySelectorAll(".rev-card");
+  if (cards.length < 2) return;
+  const total = Math.max(1, Math.floor(cards.length / 2));
 
-  const dur = Math.max(20, Number(track.dataset.dur) || 40); // segundos por volta
-  const firstDup = track.querySelector('[aria-hidden="true"]');
-  let loopW = 0; // largura de 1 conjunto = ponto de reinício sem emenda
-  let x = 0;
-  let last = performance.now();
+  // Respeita quem pede menos movimento: deixa parado no primeiro comentário
+  const reduce =
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const DWELL = 3400; // tempo parado em cada comentário (ms)
+  const SLIDE = 750;  // duração do deslize suave entre comentários (ms)
+  const EASE = "cubic-bezier(.22,.61,.36,1)"; // easing clean (saída suave)
+
+  let index = 0;
   let paused = false;
-  let inView = true;    // só anima quando o carrossel está na tela
-  let scrolling = false; // pausa durante o scroll (evita ghosting de repaint no Android)
 
-  function measure() {
-    const prev = track.style.transform;
-    track.style.transform = "none";
-    loopW = firstDup
-      ? firstDup.getBoundingClientRect().left - track.getBoundingClientRect().left
-      : track.scrollWidth / 2;
-    track.style.transform = prev;
+  // Passo = largura de 1 card + gap (recalculado a cada uso para sobreviver a resize)
+  function stepSize() {
+    const cs = getComputedStyle(track);
+    const gap = parseFloat(cs.columnGap || cs.gap) || 14;
+    return cards[0].getBoundingClientRect().width + gap;
   }
-  measure();
-  window.addEventListener("resize", measure);
+
+  function placeAt(i, animate) {
+    track.style.transition = animate ? `transform ${SLIDE}ms ${EASE}` : "none";
+    track.style.transform = `translate3d(${-(i * stepSize())}px,0,0)`;
+  }
+
+  function next() {
+    if (reduce) return;
+    if (paused || document.hidden) {
+      reviewTimer = setTimeout(next, DWELL);
+      return;
+    }
+    index += 1;
+    placeAt(index, true);
+
+    // Ao alcançar o início da cópia, volta ao começo sem emenda (mesmo conteúdo visível)
+    if (index >= total) {
+      setTimeout(() => {
+        index = 0;
+        placeAt(0, false);
+      }, SLIDE + 30);
+    }
+    reviewTimer = setTimeout(next, DWELL + SLIDE);
+  }
 
   // Pausa ao interagir; retoma sozinho ao sair
   marquee.addEventListener("mouseenter", () => (paused = true));
@@ -491,33 +520,12 @@ function startReviewMarquee() {
   marquee.addEventListener("focusin", () => (paused = true));
   marquee.addEventListener("focusout", () => (paused = false));
 
-  // Só roda a animação quando o marquee está visível (não desperdiça repaint fora da tela)
-  if ("IntersectionObserver" in window) {
-    new IntersectionObserver((entries) => {
-      inView = entries[0].isIntersecting;
-    }, { rootMargin: "120px" }).observe(marquee);
-  }
+  // Reposiciona sem animação se a tela mudar de tamanho (mantém o card alinhado)
+  reviewResizeHandler = () => placeAt(index, false);
+  window.addEventListener("resize", reviewResizeHandler);
 
-  // Durante o scroll, congela a transform: é o conflito animação+scroll que gera o "rastro"
-  let scrollTimer = 0;
-  window.addEventListener("scroll", () => {
-    scrolling = true;
-    last = performance.now(); // descarta o tempo parado p/ não dar salto ao retomar
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => { scrolling = false; }, 140);
-  }, { passive: true });
-
-  function frame(now) {
-    const dt = Math.min(0.05, (now - last) / 1000); // clamp p/ abas em 2º plano
-    last = now;
-    if (!paused && !scrolling && inView && loopW > 0 && !document.hidden) {
-      x += (loopW / dur) * dt;
-      if (x >= loopW) x -= loopW;
-      track.style.transform = `translate3d(${-x}px,0,0)`;
-    }
-    reviewRAF = requestAnimationFrame(frame);
-  }
-  reviewRAF = requestAnimationFrame(frame);
+  placeAt(0, false);
+  if (!reduce) reviewTimer = setTimeout(next, DWELL);
 }
 
 /* ---------- Autenticação UI ---------- */
