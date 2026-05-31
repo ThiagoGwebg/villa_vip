@@ -485,12 +485,19 @@ function startReviewMarquee() {
   const track = marquee && marquee.querySelector(".rev-track");
   if (!track) return;
 
+  // Respeita usuários que pedem menos movimento — nada de marquee animado
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return;
+  }
+
   const dur = Math.max(20, Number(track.dataset.dur) || 40); // segundos por volta
   const firstDup = track.querySelector('[aria-hidden="true"]');
   let loopW = 0; // largura de 1 conjunto = ponto de reinício sem emenda
   let x = 0;
   let last = performance.now();
   let paused = false;
+  let inView = true;    // só anima quando o carrossel está na tela
+  let scrolling = false; // pausa durante o scroll (evita ghosting de repaint no Android)
 
   function measure() {
     const prev = track.style.transform;
@@ -509,10 +516,26 @@ function startReviewMarquee() {
   marquee.addEventListener("focusin", () => (paused = true));
   marquee.addEventListener("focusout", () => (paused = false));
 
+  // Só roda a animação quando o marquee está visível (não desperdiça repaint fora da tela)
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver((entries) => {
+      inView = entries[0].isIntersecting;
+    }, { rootMargin: "120px" }).observe(marquee);
+  }
+
+  // Durante o scroll, congela a transform: é o conflito animação+scroll que gera o "rastro"
+  let scrollTimer = 0;
+  window.addEventListener("scroll", () => {
+    scrolling = true;
+    last = performance.now(); // descarta o tempo parado p/ não dar salto ao retomar
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => { scrolling = false; }, 140);
+  }, { passive: true });
+
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000); // clamp p/ abas em 2º plano
     last = now;
-    if (!paused && loopW > 0 && !document.hidden) {
+    if (!paused && !scrolling && inView && loopW > 0 && !document.hidden) {
       x += (loopW / dur) * dt;
       if (x >= loopW) x -= loopW;
       track.style.transform = `translate3d(${-x}px,0,0)`;

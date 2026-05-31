@@ -1678,6 +1678,9 @@ select {
   overflow: hidden;
   margin: 0 -18px;
   padding: 4px 0;
+  /* Isola o repaint da animação contínua p/ não "vazar" sobre as seções vizinhas
+     (corrige o rastro de scroll no Chrome Android) */
+  contain: layout paint;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
 }
